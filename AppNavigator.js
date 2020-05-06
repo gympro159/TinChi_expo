@@ -1,133 +1,122 @@
-import React from "react";
-import { Image, View, Text } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-// import Categories from "./screens/Categories";
-// import Category from "./screens/Category";
-// import Cart from "./screens/Cart";
-// import Order from "./screens/Order";
-// import Setting from "./screens/Setting";
-
-//Account
-import UserProfileStackScreen from "./screens/Account/UserProfile";
-import ChangePasswordStackScreen from "./screens/Account/ChangePassword";
-import LogoutStackScreen from "./screens/Account/Logout";
-
-//General Functions
-import NewsStackScreen from "./screens/GeneralFunctions/News";
-import TimeTableStackScreen from "./screens/GeneralFunctions/TimeTable";
-import MessageStackScreen from "./screens/GeneralFunctions/Message";
-
-//Statistics
-import HistoryOfStudyingStackScreen from './screens/Statistics/HistoryOfStudying';
-import StudyResultStackScreen from './screens/Statistics/StudyResult';
-import ConductStackScreen from './screens/Statistics/Conduct';
-
+import React, { useState, useReducer, createContext } from "react";
+import Axios from "axios";
+import { AsyncStorage } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import {
-  createDrawerNavigator,
-  DrawerContentScrollView,
-  DrawerItemList,
-  DrawerItem,
-} from '@react-navigation/drawer';
+import { createStackNavigator } from "@react-navigation/stack";
+import Login from "./screens/Login/Login";
+import AppDraw from "./AppDraw";
+
+export const AuthContext = createContext();
+const Stack = createStackNavigator();
 
 export default AppNavigator = () => {
- // const CategoriesName = route.params;
-  // const CategoriesStack = createStackNavigator();
-  const Tab = createBottomTabNavigator();
-  const Drawer = createDrawerNavigator();
-  
+  const [fullName, setFullName] = useState("");
+  // const [auth, setAuth] = useState({
+  //   isLoading: true, isSignout: false, userToken: null
+  // });
+  const [auth, dispatch] = useReducer(
+    (prevState, action) => {
+      switch (action.type) {
+        case "RESTORE_TOKEN":
+          return {
+            ...prevState,
+            userToken: action.token,
+            isLoading: false,
+          };
+        case "SIGN_IN":
+          return {
+            ...prevState,
+            isSignout: false,
+            userToken: action.token,
+          };
+        case "SIGN_OUT":
+          return {
+            ...prevState,
+            isSignout: true,
+            userToken: null,
+          };
+      }
+    },
+    {
+      isLoading: true,
+      isSignout: false,
+      userToken: null,
+    }
+  );
 
-  // const CategoriesStackScreen = () => {
-  //   return(
-  //     <CategoriesStack.Navigator>
-  //       <CategoriesStack.Screen
-  //         name="Categories"
-  //         component={Categories}
-  //         options={{ headerTitleAlign: "center" }}
-  //       />
-  //       <CategoriesStack.Screen
-  //         name="Category"
-  //         component={Category}
-  //         options={({ route }) => ({ title: route.params.categoryName, headerTitleAlign: "center" })}
-  //       />
-  //     </CategoriesStack.Navigator>
-  //   );
-  // }
+  React.useEffect(() => {
+    // Fetch the token from storage then navigate to our appropriate place
+    const bootstrapAsync = async () => {
+      let userToken;
 
-  const AccountTabScreen = () => {
-    return(
-      <Tab.Navigator>
-        <Tab.Screen name="Lý lịch cá nhân" component={UserProfileStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/profile.png')}/>
-        )}}/>
-        <Tab.Screen name="Đổi mật khẩu" component={ChangePasswordStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/changePass.png')}/>
-        )}}/>
-        <Tab.Screen name="Đăng xuất" component={LogoutStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/logout.png')}/>
-        )}}/>
-      </Tab.Navigator>
-    )
-  }
+      try {
+        userToken = await AsyncStorage.getItem("userToken");
+      } catch (e) {
+        // Restoring token failed
+      }
+      // console.log("bootstrapAsync -> userToken", userToken)
+      dispatch({ type: "RESTORE_TOKEN", token: userToken });
+    };
 
-  const GeneralFunctionsTabScreen = () => {
-    return(
-      <Tab.Navigator>
-        <Tab.Screen name="Tin tức - Thông báo" component={NewsStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/book.png')}/>
-        )}}/>
-        <Tab.Screen name="Thời khóa biểu" component={TimeTableStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/calendar.png')}/>
-        )}}/>
-        <Tab.Screen name="Tin nhắn" component={MessageStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/message.png')}/>
-        )}}/>
-      </Tab.Navigator>
-    )
-  }
+    bootstrapAsync();
+  }, []);
 
-  const StatisticsTabScreen = () => {
-    return(
-      <Tab.Navigator>
-        <Tab.Screen name="L.Sử Q.Trình học" component={HistoryOfStudyingStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/book.png')}/>
-        )}}/>
-        <Tab.Screen name="Kết quả học tập" component={StudyResultStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/calendar.png')}/>
-        )}}/>
-        <Tab.Screen name="Kết quả rèn luyện" component={ConductStackScreen} options={{tabBarIcon: (
-            () => <Image source={require('./assets/message.png')}/>
-        )}}/>
-      </Tab.Navigator>
-    )
-  }
+  const authContext = React.useMemo(
+    () => ({
+      signIn: async (data) => {
+        var student = [];
+        await Axios.get(
+          `http://5e88429a19f5190016fed3f8.mockapi.io/school/students`
+        )
+          .then((res) => {
+            let students = [...res.data];
+            student = students.filter(
+              (std) =>
+                std.maSinhvien === data.msv && std.password === data.password
+            );
+          })
+          .catch((error) => console.log(error));
 
-  CustomDrawerContent = (props) => {
-    return (
-      <DrawerContentScrollView {...props}>
-        <View style={{alignItems: "center", backgroundColor: "#FFF"}}>
-          <Image source={require('./assets/logo.png')}/>
-        </View>
-        <DrawerItemList {...props} />
-        <DrawerItem label="Help" onPress={() => alert('Link to help')} />
-      </DrawerContentScrollView>
-    );
-  }
-
+        if (student.length > 0) {
+          //await AsyncStorage.setItem("userToken", `${student[0].maSinhvien}`);
+          setFullName(student[0].fullName);
+          dispatch({ type: "SIGN_IN", token: `${student[0].maSinhvien}` });
+        } else {
+          dispatch({ type: "SIGN_IN", token: null });
+        }
+      },
+      signOut: () => {
+        AsyncStorage.removeItem("userToken");
+        dispatch({ type: "SIGN_OUT" })
+      },
+    }),
+    []
+  );
+  // console.log(auth.userToken);
   return (
-    <NavigationContainer>
-      <Drawer.Navigator drawerContent={props => <CustomDrawerContent {...props} />}>
-        <Drawer.Screen name="Các chức năng chung" component={GeneralFunctionsTabScreen} options={{drawerIcon: (
-            () => <Icon style={{marginLeft: 10}} name="newspaper-o" size={30}/>
-        )}}/>
-        <Drawer.Screen name="Tài khoản" component={AccountTabScreen} options={{drawerIcon: (
-            () => <Icon style={{marginLeft: 10}} name="id-card" size={30}/>
-        )}}/>
-        <Drawer.Screen name="Số liệu - Tổng hợp" component={StatisticsTabScreen} options={{drawerIcon: (
-            () => <Icon style={{marginLeft: 10}} name="id-card" size={30}/>
-        )}}/>
-      </Drawer.Navigator>
-    </NavigationContainer>
+    <AuthContext.Provider value={authContext}>
+      <NavigationContainer>
+        <Stack.Navigator>
+          {auth.userToken == null? (
+            <Stack.Screen
+              name="Login"
+              component={Login}
+              options={{
+                headerShown: false,
+              }}
+            />
+          ) : (
+            <Stack.Screen
+              name="App"
+              component={AppDraw}
+              name={fullName}
+              options={{
+                headerShown: false,
+              }}
+            />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthContext.Provider>
   );
 };

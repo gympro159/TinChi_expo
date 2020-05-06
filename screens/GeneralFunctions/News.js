@@ -1,40 +1,40 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, FlatList, StatusBar, Dimensions } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
+import Axios from "axios";
 import ListNews from "./../../components/ListNews/ListNews";
-import { Dimensions } from "react-native";
+
 const WIDTH = Dimensions.get("window").width;
 
 const News = ({ navigation }) => {
-  [newsContent, setnewsContent] = useState([
-    {
-      title:
-        "Thông báo về việc thay đổi thời gian thực hiện bổ sung hộ nghèo, cận nghèo năm 2020 và các đối tượng miễn, giảm, trợ cấp xã hội",
-      content:
-        "Sinh viên tiếp tục triển khai việc bổ sung hộ nghèo, cận nghèo năm 2020 và các đối tượng miễn, giảm, trợ cấp xã hội. \n Ngày 17/02/2020, Hiệu trưởng đã ban hành Thông báo số 121/TB-ĐHKH về việc bổ sung hộ nghèo, cận nghèo năm 2020 của đối tượng dân tộc ít người, tàn tật và cá đối tượng miễn, giảm, trợ cấp xã hội khác đến nay đã hết thời hạn bổ sung. Tuy nhiên, do tình hình sinh viên tiếp tục được nghỉ hoc, để đảm bảo điều kiện thuận lợi, hõ trợ thực hiện đầy đủ chế độ chính sách cho người học, Nhà trường tiếp tục nhận bổ sung các thủ tục cho đến khi có thông báo mới. \n Trân trọng.",
-      date: "09/03/2020 10:02"
-    },
-    {
-      title:
-        "Thông báo về việc nhắc nhở sinh viên thực hiện kê khai dữ liệu ngoại trú (thông tin dịch tễ)",
-      content:
-        "Nhà trường thông báo đến sinh viên chưa kê khai dữ liệu ngoại trú (thông tin dịch tễ) khẩn trương thực hiện theo quy định \nNgày 28/02/2020, Nhà trường đã tiến hành thông báo kê khai dữ liệu ngoại trú dùng để báo cáo Ban chỉ đạo phòng, chống dịch bệnh của Trường và Đại học Huế. Đến nay, đa số sinh viên đã thực hiện, tuy nhiên vẫn còn một số chưa chấp hành yêu cầu của Nhà trường. Vì vậy, đề nghị các em sinh viên phải thực hiện nghiêm túc và hoàn thành trước 07h ngày 06/3/2020. \nTrường hợp sinh viên không thực hiện sẽ xem xét xử lý kỷ luật.",
-      date: "04/03/2020 15:07"
-    }
-  ]);
+  [newsContent, setnewsContent] = useState([]);
+
+  useEffect(() => {
+    Axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/news`)
+      .then((res) => {
+        var newsContentTemp = [];
+        for(let i=0; i<10; i++)
+        {
+          newsContentTemp.push(res.data[res.data.length-1-i])
+        }
+        setnewsContent(newsContentTemp);
+      })
+  }, [])
 
   return (
-    <>
-      <View>
-        <Text>THÔNG BÁO</Text>
+    <View>
+      <StatusBar barStyle="dark-content" backgroundColor="#ecf0f1" />
+      <View style={{borderBottomColor: '#000', borderBottomWidth: 1}}>
+        <Text style={styles.titleHeader}>THÔNG BÁO</Text>
       </View>
       <FlatList
         data={newsContent}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <ListNews
             news={item}
+            index={index}
             onPress={() => {
               navigation.navigate("NewsContent", {
                 news_Title: item.title,
@@ -47,16 +47,19 @@ const News = ({ navigation }) => {
         keyExtractor={item => `${item.date}`}
         contentContainerStyle={styles.container}
       />
-    </>
+    </View>
   );
 };
 
 const NewsContent = ({ navigation, route }) => {
   return (
-    <View>
-      <Text>{route.params.news_Title}</Text>
-      <Text>{route.params.news_Date}</Text>
-      <Text>{route.params.news_Content}</Text>
+    <View style={{padding: 10, paddingTop: 0}}>
+      <View style={{borderBottomColor: '#000', borderBottomWidth: 1}}>
+        <Text style={styles.titleHeader}>THÔNG BÁO</Text>
+      </View>
+      <Text style={{fontWeight: 'bold', fontSize: 17}}>   {route.params.news_Title}</Text>
+      <Text style={{fontSize: 13, paddingBottom: 10, color: '#777777'}}>({route.params.news_Date})</Text>
+      <Text> {route.params.news_Content}</Text>
     </View>
   );
 };
@@ -73,7 +76,7 @@ export default NewsStackScreen = ({ navigation, route }) => {
           headerTitleAlign: "center",
           title: "Tin tức - Thông báo",
           headerLeft: () => (
-            <Icon
+            <FontAwesome
               onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
               style={{ marginLeft: 10 }}
               name="bars"
@@ -99,7 +102,14 @@ export default NewsStackScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 16,
-    paddingHorizontal: 16
+    //paddingTop: 16,
+    paddingHorizontal: 16,
+  },
+  titleHeader: {
+    textTransform: "uppercase",
+    color: "#004275",
+    fontSize: 20,
+    fontWeight: "bold",
+    padding: 10
   }
 });
