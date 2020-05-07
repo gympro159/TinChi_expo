@@ -190,7 +190,7 @@ const TimeTable = ({ navigation }) => {
               widthArr={[107, 200, 200, 200]}
             />
           </TableWrapper>
-          <ScrollView>
+          <ScrollView vertical={true}>
             <Table borderStyle={{ borderColor: "grey", borderWidth: 2 }}>
               <Rows
                 data={content}
