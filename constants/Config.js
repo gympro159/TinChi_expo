@@ -1,0 +1,1 @@
+export const API_URL = 'http://ums-dev.husc.edu.vn/apigateway';

@@ -13,7 +13,7 @@ import { AuthContext } from "./../../AppNavigator";
 const { width, height } = Dimensions.get("window");
 
 const Login = () => {
-  const [msv, setMsv] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const { signIn } = useContext(AuthContext);
@@ -28,8 +28,8 @@ const Login = () => {
           {/* <Text style={styles.textHeader}>Mã sinh viên:</Text> */}
           <Text h4>Sinh viên</Text>
           <Input
-            onChangeText={setMsv}
-            value={msv}
+            onChangeText={setUsername}
+            value={username}
             style={styles.textInput}
             placeholder="Mã sinh viên"
             leftIcon={<FontAwesome name="user" size={24} color="#000" style={{marginRight: 5}}/>}
@@ -43,7 +43,7 @@ const Login = () => {
             leftIcon={<FontAwesome name="key" size={24} color="#000" style={{marginRight: 5}}/>}
             secureTextEntry
           />
-          <Button title="Đăng nhập" buttonStyle={styles.buttonSubmit} onPress={() => signIn({ msv, password })} />
+          <Button title="Đăng nhập" buttonStyle={styles.buttonSubmit} onPress={() => signIn({ username, password })} />
         </View>
       </ImageBackground>
     </View>
