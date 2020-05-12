@@ -1,17 +1,19 @@
-import React, { useState } from "react";
-import { Image, View, Text, ImageBackground, StyleSheet } from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome";
+import React, { useState, useEffect, useContext } from "react";
+import {
+  Image,
+  View,
+  Text,
+  ImageBackground,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-// import Categories from "./screens/Categories";
-// import Category from "./screens/Category";
-// import Cart from "./screens/Cart";
-// import Order from "./screens/Order";
-// import Setting from "./screens/Setting";
-
+import { connect } from "react-redux";
+import { AuthContext } from "./AppNavigator";
 //Account
 import UserProfileStackScreen from "./screens/Account/UserProfile";
 import ChangePasswordStackScreen from "./screens/Account/ChangePassword";
-import LogoutStackScreen from "./screens/Account/Logout";
 
 //General Functions
 import NewsStackScreen from "./screens/GeneralFunctions/News";
@@ -23,7 +25,7 @@ import HistoryOfStudyingStackScreen from "./screens/Statistics/HistoryOfStudying
 import StudyResultStackScreen from "./screens/Statistics/StudyResult";
 import ConductStackScreen from "./screens/Statistics/Conduct";
 
-//Studyinh
+//Studying
 import ModulesStackScreen from "./screens/Studying/Modules";
 import RegisteredCoursesStackScreen from "./screens/Studying/RegisteredCourses";
 import ScheduleOfExamStackScreen from "./screens/Studying/ScheduleOfExam";
@@ -34,222 +36,243 @@ import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
-  DrawerItem
+  DrawerItem,
 } from "@react-navigation/drawer";
 
-// const CategoriesName = route.params;
-// const CategoriesStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
-// const CategoriesStackScreen = () => {
-//   return(
-//     <CategoriesStack.Navigator>
-//       <CategoriesStack.Screen
-//         name="Categories"
-//         component={Categories}
-//         options={{ headerTitleAlign: "center" }}
-//       />
-//       <CategoriesStack.Screen
-//         name="Category"
-//         component={Category}
-//         options={({ route }) => ({ title: route.params.categoryName, headerTitleAlign: "center" })}
-//       />
-//     </CategoriesStack.Navigator>
-//   );
-// }
-
 const AccountTabScreen = () => {
   return (
-    <Tab.Navigator>
-      <Tab.Screen
-        name="Lý lịch cá nhân"
-        component={UserProfileStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/profile.png")} />
-        }}
-      />
-      <Tab.Screen
-        name="Đổi mật khẩu"
-        component={ChangePasswordStackScreen}
-        options={{
-          tabBarIcon: () => (
-            <Image source={require("./assets/changePass.png")} />
-          )
-        }}
-      />
-      <Tab.Screen
-        name="Đăng xuất"
-        component={LogoutStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/logout.png")} />
-        }}
-      />
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color }) => {
+          let iconName;
+          color = focused ? "blue" : "gray";
+          if (route.name === "Lý lịch cá nhân") {
+            iconName = "user";
+          } else if (route.name === "Đổi mật khẩu") {
+            iconName = "key";
+          }
+          return <FontAwesome name={iconName} size={24} color={color} />;
+        },
+      })}
+      tabBarOptions={{
+        activeTintColor: "blue",
+        inactiveTintColor: "gray",
+      }}
+    >
+      <Tab.Screen name="Lý lịch cá nhân" component={UserProfileStackScreen} />
+      <Tab.Screen name="Đổi mật khẩu" component={ChangePasswordStackScreen} />
     </Tab.Navigator>
   );
 };
 
 const GeneralFunctionsTabScreen = () => {
   return (
-    <Tab.Navigator>
-      <Tab.Screen
-        name="Tin tức - Thông báo"
-        component={NewsStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/book.png")} />
-        }}
-      />
-      <Tab.Screen
-        name="Thời khóa biểu"
-        component={TimeTableStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/calendar.png")} />
-        }}
-      />
-      <Tab.Screen
-        name="Tin nhắn"
-        component={MessageStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/message.png")} />
-        }}
-      />
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color }) => {
+          let iconName;
+          color = focused ? "blue" : "gray";
+          if (route.name === "Tin Tức - T.Báo") {
+            iconName = "newspaper-o";
+          } else if (route.name === "Thời khóa biểu") {
+            iconName = "calendar";
+          } else if (route.name === "Tin nhắn") {
+            iconName = "envelope";
+          }
+          return <FontAwesome name={iconName} size={24} color={color} />;
+        },
+      })}
+      tabBarOptions={{
+        activeTintColor: "blue",
+        inactiveTintColor: "gray",
+      }}
+    >
+      <Tab.Screen name="Tin Tức - T.Báo" component={NewsStackScreen} />
+      <Tab.Screen name="Thời khóa biểu" component={TimeTableStackScreen} />
+      <Tab.Screen name="Tin nhắn" component={MessageStackScreen} />
     </Tab.Navigator>
   );
 };
 
 const StatisticsTabScreen = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color }) => {
+          let iconName;
+          color = focused ? "blue" : "gray";
+          if (route.name === "L.Sử Q.Trình học") {
+            iconName = "bookmark";
+          } else if (route.name === "Kết quả học tập") {
+            iconName = "graduation-cap";
+          } else if (route.name === "Kết quả rèn luyện") {
+            iconName = "fire";
+          }
+          return <FontAwesome name={iconName} size={24} color={color} />;
+        },
+      })}
+      tabBarOptions={{
+        activeTintColor: "blue",
+        inactiveTintColor: "gray",
+      }}
+    >
       <Tab.Screen
         name="L.Sử Q.Trình học"
         component={HistoryOfStudyingStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/book.png")} />
-        }}
       />
-      <Tab.Screen
-        name="Kết quả học tập"
-        component={StudyResultStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/calendar.png")} />
-        }}
-      />
-      <Tab.Screen
-        name="Kết quả rèn luyện"
-        component={ConductStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/message.png")} />
-        }}
-      />
+      <Tab.Screen name="Kết quả học tập" component={StudyResultStackScreen} />
+      <Tab.Screen name="Kết quả rèn luyện" component={ConductStackScreen} />
     </Tab.Navigator>
   );
 };
 
 const StudyingTabScreen = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color }) => {
+          let iconName;
+          color = focused ? "blue" : "gray";
+
+          if (route.name === "Đăng ký học tập") {
+            iconName = "pencil-square";
+          } else if (route.name === "Lớp H.Phần đã ĐK") {
+            iconName = "flag";
+          } else if (route.name === "Lịch thi") {
+            iconName = "bell";
+          }
+          return <FontAwesome name={iconName} size={24} color={color} />;
+        },
+      })}
+      tabBarOptions={{
+        activeTintColor: "blue",
+        inactiveTintColor: "gray",
+      }}
+    >
+      <Tab.Screen name="Đăng ký học tập" component={ModulesStackScreen} />
       <Tab.Screen
-        name="Đăng ký học tập"
-        component={ModulesStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/book.png")} />
-        }}
-      />
-      <Tab.Screen
-        name="Lớp H.Phần đã đăng ký"
+        name="Lớp H.Phần đã ĐK"
         component={RegisteredCoursesStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/calendar.png")} />
-        }}
       />
-      <Tab.Screen
-        name="Lịch thi"
-        component={ScheduleOfExamStackScreen}
-        options={{
-          tabBarIcon: () => <Image source={require("./assets/message.png")} />
-        }}
-      />
+      <Tab.Screen name="Lịch thi" component={ScheduleOfExamStackScreen} />
     </Tab.Navigator>
   );
 };
 
-DrawerContent = props => {
+DrawerContent = (props) => {
+  const { signOut } = useContext(AuthContext);
   return (
-    <DrawerContentScrollView {...props} style={{flex: 1}}>
+    <DrawerContentScrollView {...props} style={{ flex: 1 }}>
       <ImageBackground
-        source={require("./assets/bg-avatar.jpg")} b //?? 
-        style={{ width: undefined, padding: 16}}
+        source={require("./assets/bg-avatar.jpg")}
+        style={{ width: undefined, padding: 16 }}
       >
         <Image source={require("./assets/avatar.jpg")} style={styles.profile} />
-        <Text style={styles.name}>{props.name}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center"}}>
+          <Text style={styles.name}>{props.name} </Text>
+          <TouchableOpacity
+            activeOpacity={0.1}
+            onPress={() =>
+              Alert.alert(
+                "Đăng xuất",
+                "Bạn xác nhận muốn đăng xuất?",
+                [
+                  { text: "OK", onPress: () => signOut() },
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                ],
+                { cancelable: false }
+              )
+            }
+          >
+            <FontAwesome name="sign-out" size={25} color="red"/>
+          </TouchableOpacity>
+        </View>
       </ImageBackground>
       <DrawerItemList {...props} />
-      <View style={{ alignItems: "center", marginVertical: 300}}>
+      <View style={{ alignItems: "center", marginTop: 250 }}>
         <Image source={require("./assets/logo.png")} />
       </View>
     </DrawerContentScrollView>
   );
 };
 
-export default AppNavigator = props => {
-  var name = props.route.name;
+const AppDraw = ({ studentProfile }) => {
+  var name = studentProfile.HoVaTen;
   return (
-      <Drawer.Navigator drawerContent={props => <DrawerContent {...props} name={name}/>}>
-        <Drawer.Screen
-          name="Các chức năng chung"
-          component={GeneralFunctionsTabScreen}
-          options={{
-            drawerIcon: () => (
-              <FontAwesome style={{ marginLeft: 10 }} name="newspaper-o" size={30} />
-            )
-          }}
-        />
-        <Drawer.Screen
-          name="Tài khoản"
-          component={AccountTabScreen}
-          options={{
-            drawerIcon: () => (
-              <FontAwesome style={{ marginLeft: 10 }} name="id-card" size={30} />
-            )
-          }}
-        />
-        <Drawer.Screen
-          name="Kế hoạch học tập"
-          component={StudyingTabScreen}
-          options={{
-            drawerIcon: () => (
-              <FontAwesome style={{ marginLeft: 10 }} name="id-card" size={30} />
-            )
-          }}
-        />
-        <Drawer.Screen
-          name="Số liệu - Tổng hợp"
-          component={StatisticsTabScreen}
-          options={{
-            drawerIcon: () => (
-              <FontAwesome style={{ marginLeft: 10 }} name="id-card" size={30} />
-            )
-          }}
-        />
-      </Drawer.Navigator>
+    <Drawer.Navigator
+      screenOptions={({ route }) => ({
+        drawerIcon: ({ focused, color }) => {
+          let iconName;
+          color = focused ? "blue" : "black";
+
+          if (route.name === "Các chức năng chung") {
+            iconName = "home";
+          } else if (route.name === "Tài khoản") {
+            iconName = "vcard";
+          } else if (route.name === "Kế hoạch học tập") {
+            iconName = "book";
+          } else if (route.name === "Số liệu - Tổng hợp") {
+            iconName = "bar-chart";
+          }
+          return (
+            <FontAwesome
+              style={{ marginLeft: 10 }}
+              name={iconName}
+              size={30}
+              color={color}
+            />
+          );
+        },
+      })}
+      drawerContentOptions={{
+        activeTintColor: "blue",
+        inactiveTintColor: "black",
+      }}
+      drawerContent={(props) => <DrawerContent {...props} name={name} />}
+    >
+      <Drawer.Screen
+        name="Các chức năng chung"
+        component={GeneralFunctionsTabScreen}
+      />
+      <Drawer.Screen name="Tài khoản" component={AccountTabScreen} />
+      <Drawer.Screen name="Kế hoạch học tập" component={StudyingTabScreen} />
+      <Drawer.Screen
+        name="Số liệu - Tổng hợp"
+        component={StatisticsTabScreen}
+      />
+    </Drawer.Navigator>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
   },
   profile: {
     width: 80,
     height: 80,
     borderRadius: 40,
     borderWidth: 3,
-    borderColor: "#FFF"
+    borderColor: "#FFF",
   },
-  name : {
-    color: '#000',
+  name: {
+    color: "#000",
     fontSize: 20,
     fontWeight: "800",
-    marginVertical: 8
-  }
+    marginVertical: 8,
+  },
 });
+
+const mapStateToProps = (state) => {
+  return {
+    studentProfile: state.studentProfile,
+  };
+};
+
+export default connect(mapStateToProps, null)(AppDraw);

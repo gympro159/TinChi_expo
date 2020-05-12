@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, Button, StyleSheet, FlatList, Dimensions } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
 import { Text, ButtonGroup } from "react-native-elements";
+import axios from "axios";
 
 //import components
 import ListMessages from "./../../components/ListMessages/ListMessages";
@@ -31,24 +32,24 @@ const Message = ({ navigation, route }) => {
           <Text style={{ fontWeight: "bold", fontSize: 15 }}>
             <FontAwesome name="envelope" size={16} /> Người gửi:{" "}
           </Text>
-          <Text style={{ fontSize: 15 }}>{message.sender.name}</Text>
+          <Text style={{ fontSize: 15 }}>{message.nguoiGui.name}</Text>
         </View>
         <View style={styles.infoMessage}>
           <Text style={{ fontWeight: "bold", fontSize: 15 }}>
             <FontAwesome name="clock-o" size={16} /> Thời điểm gửi:{" "}
           </Text>
-          <Text style={{ fontSize: 15 }}>{message.whenSend}</Text>
+          <Text style={{ fontSize: 15 }}>{message.thoiGianGui}</Text>
         </View>
         <View style={styles.infoMessage}>
           <Text style={{ fontWeight: "bold", fontSize: 15 }}>
             <FontAwesome name="eye" size={16} /> Người nhận:{" "}
           </Text>
           <Text style={{ fontSize: 15, marginRight: 100 }}>
-            {`${message.receiver[0].name}${
-              message.receiver.length > 1 ? "; " + message.receiver[1].name : ""
+            {`${message.nguoiNhan[0].name}${
+              message.nguoiNhan.length > 1 ? "; " + message.nguoiNhan[1].name : ""
             }${
-              message.receiver.length > 2
-                ? "; [" + message.receiver.length + "...]"
+              message.nguoiNhan.length > 2
+                ? "; [" + message.nguoiNhan.length + "...]"
                 : ""
             }`}
           </Text>
@@ -57,13 +58,12 @@ const Message = ({ navigation, route }) => {
           <Text style={{ fontWeight: "bold", fontSize: 15 }}>
             <FontAwesome name="clock-o" size={16} /> Thời điểm xem:{" "}
           </Text>
-          <Text style={{ fontSize: 15 }}>{message.receiver[0].timeViewed}</Text>
+          <Text style={{ fontSize: 15 }}>{message.thoiGianNhan}</Text>
         </View>
       </View>
       <View style={styles.contentMessage}>
         <Text>{message.content}</Text>
       </View>
-      <View></View>
     </View>
   );
 };
@@ -74,101 +74,53 @@ const Inbox = ({ navigation }) => {
   // const forceUpdate = useCallback(() => {
   //   setTick(tick + 1);
   // }, [tick]);
+  const [messagesRender, setMessagesRender] = useState([])
 
-  const [messages, setMessages] = useState([
-    {
-      seen: false,
-      title: "Về việc thi kết thúc học phần Quy trình phát triển phần mềm",
-      content: "https://1drv.ms/u/s!AlA3WF7YnKsdg4FDJKuXyVKqkE__Ag",
-      sender: {
-        idGV: "GV_CNTT_01",
-        name: "Nguyễn Văn Trung",
-      },
-      whenSend: "04-01-2020 07:43",
-      receiver: [
-        {
-          idSV: "16T1021102",
-          name: "Lê Ngọc Nghĩa",
-          timeViewed: "",
-        },
-        {
-          idSV: "16T1021103",
-          name: "Lê Đức Huy",
-          timeViewed: "04-01-2020 07:45",
-        },
-        {
-          idSV: "16T1021104",
-          name: "Nguyễn Văn Hải",
-          timeViewed: "04-01-2020 07:59",
-        },
-      ],
-    },
-    {
-      seen: false,
-      title: "Kiểm tra điểm quá trình môn Java nâng cao và Lập trình phân tán",
-      content: "https://1drv.ms/u/s!AlA3WF7YnKsdg4FDJKuXyVKqkE__Ag",
-      sender: {
-        idGV: "GV_CNTT_01",
-        name: "Nguyễn Văn Trung",
-      },
-      whenSend: "04-02-2020 07:43",
-      receiver: [
-        {
-          idSV: "16T1021102",
-          name: "Lê Ngọc Nghĩa",
-          timeViewed: "",
-        },
-        {
-          idSV: "16T1021103",
-          name: "Lê Đức Huy",
-          timeViewed: "04-02-2020 07:45",
-        },
-        {
-          idSV: "16T1021104",
-          name: "Nguyễn Văn Hải",
-          timeViewed: "04-02-2020 07:59",
-        },
-      ],
-    },
-    {
-      seen: true,
-      title: "[DP] - Bài tập kiểm tra 1 (Lời giải) +Slides giới thiệu Git VCS",
-      content: "https://1drv.ms/u/s!AlA3WF7YnKsdg4FDJKuXyVKqkE__Ag",
-      sender: {
-        idGV: "GV_CNTT_01",
-        name: "Nguyễn Văn Trung",
-      },
-      whenSend: "04-03-2020 07:43",
-      receiver: [
-        {
-          idSV: "16T1021102",
-          name: "Lê Ngọc Nghĩa",
-          timeViewed: "04-03-2020 07:44",
-        },
-        {
-          idSV: "16T1021103",
-          name: "Lê Đức Huy",
-          timeViewed: "04-03-2020 07:45",
-        },
-      ],
-    },
-  ]);
+  useEffect(() => {
+    axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/message`).then(res=> {
+      setMessages(res.data);
+      let messagesTemp = []
+      res.data.forEach(message => {
+        if(message.loaiTin===1){
+          messagesTemp.push(message);
+        }
+      })
+      let list = [];
+      for (let i = 0; i < messagesTemp.length; i++) {
+        list.push(false);
+      }
+      setMessagesRender(messagesTemp);
+      setCheckList(list);
+    })
+  }, [])
+  
+  const [bold, setBold] = useState(true)
 
-  const [checkList, setCheckList] = useState(() => {
-    const list = [],
-      check = false;
-    for (let i = 0; i < messages.length; i++) {
-      list.push(check);
-    }
-    return list;
-  });
+  const [messages, setMessages] = useState([]);
 
   const [selectedIndex, setSelectedIndex] = useState(1);
-
-  const compose = () => <Text onPress={() => navigation.push("Compose")}>Soạn tin</Text>;
-  const inbox = () => <Text>Tin nhắn đến</Text>;
-  const sent = () => <Text>Tin nhắn đã gửi</Text>;
-  const deleted = () => <Text>Tin đã xóa</Text>;
+  
+  const [checkList, setCheckList] = useState([]);
+  
+  const compose = () => (
+    <Text
+      style={{ fontSize: 13, textAlign: "center" }}
+      onPress={() => navigation.push("Compose")}
+    ><FontAwesome name="send" size={15}/>
+       {" "}Soạn tin
+    </Text>
+  );
+  const inbox = () => (
+    <Text style={{ fontSize: 13, textAlign: "center" }}>Tin nhắn đến</Text>
+  );
+  const sent = () => (
+    <Text style={{ fontSize: 13, textAlign: "center" }}>
+      Tin nhắn{"\n"} đã gửi
+    </Text>
+  );
+  const deleted = () => (
+    <Text style={{ fontSize: 13, textAlign: "center" }}>Tin đã xóa</Text>
+  );
   const buttons = [
     { element: compose },
     { element: inbox },
@@ -176,32 +128,43 @@ const Inbox = ({ navigation }) => {
     { element: deleted },
   ];
 
-  updateIndex = (selectedIndex) => {
+  const updateIndex = (selectedIndex) => {
     setSelectedIndex(selectedIndex);
+    let tempMessages = [];
+      let loaiTin = selectedIndex!==0?selectedIndex:1;
+      messages.forEach(message => {
+        if(message.loaiTin===loaiTin){
+          tempMessages.push(message);
+        }
+      })
+      setMessagesRender(tempMessages);
+      let list = [];
+      for (let i = 0; i < tempMessages.length; i++) {
+        list.push(false);
+      }
+      setCheckList(list)
   };
-
   return (
     <View style={{ flex: 1 }}>
-      <Text>Inbox</Text>
       <ButtonGroup
         onPress={updateIndex}
         selectedIndex={selectedIndex}
         buttons={buttons}
-        selectedTextStyle= {styles.selectedTextStyle}
+        selectedTextStyle={styles.selectedTextStyle}
+        selectedButtonStyle={styles.selectedButtonStyle}
         buttonStyle={styles.buttonStyle}
         containerStyle={styles.containerStyle}
       />
-      <Button title="Soạn tin" onPress={() => navigation.push("Compose")} />
       <FlatList
-        data={messages}
+        data={messagesRender}
         renderItem={({ item, index }) => (
           <ListMessages
             message={item}
             checkList={checkList}
             index={index}
             onPress={() => {
-              if (messages[index].seen == false) {
-                var tempMessages = [...messages],
+              if (!item.thoiGianNhan) {
+                var tempMessage = {...item},
                   date = new Date(),
                   timeViewedtemp = `${
                     date.getDate() > 9 ? date.getDate() : "0" + date.getDate()
@@ -218,9 +181,10 @@ const Inbox = ({ navigation }) => {
                       ? date.getMinutes()
                       : "0" + date.getMinutes()
                   }`;
-                tempMessages[index].receiver[0].timeViewed = timeViewedtemp;
-                tempMessages[index].seen = true;
-                setMessages(tempMessages);
+                tempMessage.thoiGianNhan = timeViewedtemp;
+                item.thoiGianNhan = timeViewedtemp
+                setBold(!bold)
+                axios.put(`https://5e88429a19f5190016fed3f8.mockapi.io/school/message/${item.id}`, tempMessage)
               }
               navigation.navigate("Message", {
                 message: item,
@@ -233,7 +197,7 @@ const Inbox = ({ navigation }) => {
             }}
           />
         )}
-        keyExtractor={(item) => `${item.whenSend}`}
+        keyExtractor={(item) => `${item.thoiGianGui}`}
         contentContainerStyle={{ paddingHorizontal: 10 }}
       />
     </View>
@@ -311,17 +275,22 @@ const styles = StyleSheet.create({
     borderTopColor: "#777",
     borderTopWidth: 1,
   },
-  containerStyle: { 
-    height: 50, 
-    width: WIDTH, 
-    marginLeft: 0 
+  containerStyle: {
+    height: 40,
+    width: WIDTH,
+    marginLeft: 0,
+    marginTop: 0,
   },
   buttonStyle: {
-    
+    backgroundColor: "#FFF",
+    opacity: 1
+  },
+  selectedButtonStyle: {
+    backgroundColor: "#0080ff",
+    opacity: 0.7
   },
   selectedTextStyle: {
-    color: '#FFF',
-    fontWeight: '900'
+    color: "#FFF",
   },
   listButton: {
     textAlign: "center",

@@ -3,7 +3,9 @@ import {
   StyleSheet,
   View,
   Dimensions,
-  ImageBackground
+  ImageBackground,
+  Image,
+  Alert
 } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
@@ -12,65 +14,97 @@ import { AuthContext } from "./../../AppNavigator";
 
 const { width, height } = Dimensions.get("window");
 
-const Login = () => {
+export default  Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
+  const [loading, setLoading] = useState(false)
   const { signIn } = useContext(AuthContext);
 
   return (
     <View>
       <ImageBackground
-        style={{ width, height }}
+        style={{ width, height: height * 1.1 }}
         source={require("./../../assets/bg-avatar.jpg")}
       >
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("./../../assets/cems-logo.png")}
+            style={styles.logo}
+          />
+        </View>
+
         <View style={styles.container}>
-          {/* <Text style={styles.textHeader}>Mã sinh viên:</Text> */}
           <Text h4>Sinh viên</Text>
           <Input
             onChangeText={setUsername}
             value={username}
             style={styles.textInput}
             placeholder="Mã sinh viên"
-            leftIcon={<FontAwesome name="user" size={24} color="#000" style={{marginRight: 5}}/>}
+            leftIcon={
+              <FontAwesome
+                name="user"
+                size={24}
+                color="#000"
+                style={{ marginRight: 10 }}
+              />
+            }
           />
-          {/* <Text style={styles.textHeader}>Mật khẩu:</Text> */}
           <Input
             onChangeText={setPassword}
             value={password}
             style={styles.textInput}
             placeholder="Mật khẩu"
-            leftIcon={<FontAwesome name="key" size={24} color="#000" style={{marginRight: 5}}/>}
+            leftIcon={
+              <FontAwesome
+                name="lock"
+                size={24}
+                color="#000"
+                style={{ marginRight: 10 }}
+              />
+            }
             secureTextEntry
           />
-          <Button title="Đăng nhập" buttonStyle={styles.buttonSubmit} onPress={() => signIn({ username, password })} />
+          <Button
+            title="Đăng nhập"
+            buttonStyle={styles.buttonSubmit}
+            onPress={() => {
+              setLoading(true);
+              if(username === "" || password === "")
+              {
+                Alert.alert(
+                  "Thông báo",
+                  "Mã sinh viên và Mật khẩu không được để trống",
+                  [
+                    { text: "OK", onPress: () => setLoading(false) },
+                  ],
+                  { cancelable: false }
+                )
+              } else {
+              const setLoad = () => {
+                Alert.alert(
+                  "Thông báo",
+                  "Sai Mã sinh viên hoặc Mật khẩu",
+                  [
+                    { text: "OK", onPress: () => setLoading(false) },
+                  ],
+                  { cancelable: false }
+                )
+              }
+              signIn({ username, password, setLoad });
+            }
+          }}
+            loading={loading}
+          />
         </View>
       </ImageBackground>
     </View>
   );
 };
 
-const Stack = createStackNavigator();
-
-export default LoginScreen = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="Login"
-        component={Login}
-        options={{
-          headerTitleAlign: "center",
-          title: "Đăng nhập"
-        }}
-      />
-    </Stack.Navigator>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 80,
+    marginTop: 30,
     marginBottom: 300,
     marginHorizontal: 10,
     justifyContent: "center",
@@ -80,14 +114,23 @@ const styles = StyleSheet.create({
     zIndex: 999,
     elevation: 10,
     shadowColor: "#000",
-    borderRadius: 20
+    borderRadius: 20,
+  },
+  logoContainer: {
+    marginTop: 90,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logo: {
+    height: 100,
+    width: 100,
   },
   textHeader: {
     color: "#000",
     fontSize: 17,
     alignItems: "flex-start",
     marginVertical: 10,
-    marginLeft: 20
+    marginLeft: 20,
   },
   textInput: {
     width: width * 0.9,
@@ -100,6 +143,25 @@ const styles = StyleSheet.create({
   buttonSubmit: {
     padding: 10,
     marginTop: 20,
-    borderRadius: 10
-  }
+    borderRadius: 10,
+    width: 130
+  },
 });
+
+// const Stack = createStackNavigator();
+
+// export default LoginScreen = () => {
+//   return (
+//     <Stack.Navigator>
+//       <Stack.Screen
+//         name="Login"
+//         component={LoginConnect}
+//         options={{
+//           headerShown: false,
+//           headerTitleAlign: "center",
+//           title: "Đăng nhập",
+//         }}
+//       />
+//     </Stack.Navigator>
+//   );
+// };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,11 +12,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import { DrawerActions } from "@react-navigation/native";
 import Course from "./../Course/Course";
 import Subject from "./../Subject/Subject";
-import {
-  Collapse,
-  CollapseHeader,
-  CollapseBody,
-} from "accordion-collapse-react-native";
+import axios from "axios";
 import {
   Table,
   TableWrapper,
@@ -37,62 +33,51 @@ const HistoryOfStudying = ({ navigation }) => {
     "Tổng điểm",
   ]);
 
-  const [contentTable, setContentTable] = useState([
-    {
-      year: "2016-2017",
-      semester: 1,
-      course: [
-        {
-          maHP: "CTR1012",
-          maLHP: "2016-2017.1.CTR1012.004",
-          lopHP: "Những nguyên lí cơ bản của chủ nghĩa Mác-Lênin 1 - Nhóm 4",
-          diemThi: 5.5,
-          tongDiem: 7.0,
-        },
-        {
-          maHP: "TIN1013",
-          maLHP: "2016-2017.1.TIN1013.005",
-          lopHP: "Tin học đại cương - Nhóm 5",
-          diemThi: 7.0,
-          tongDiem: 7.4,
-        },
-        {
-          maHP: "TIN1042",
-          maLHP: "2016-2017.1.TIN1042.003",
-          lopHP: "Kỹ thuật lập trình 1 - Nhóm 3",
-          diemThi: 8.0,
-          tongDiem: 8.4,
-        },
-      ],
-    },
-    {
-      year: "2016-2017",
-      semester: 2,
-      course: [
-        {
-          maHP: "MTR1022",
-          maLHP: "2016-2017.2.MTR1022.006",
-          lopHP: "Giáo dục môi trường đại cương - Nhóm 6",
-          diemThi: 8.3,
-          tongDiem: 8.7,
-        },
-        {
-          maHP: "TIN3133",
-          maLHP: "2016-2017.2.TIN3133.001",
-          lopHP: "Đồ hoạ máy tính - Nhóm 1",
-          diemThi: 9.5,
-          tongDiem: 8.9,
-        },
-        {
-          maHP: "TIN3053",
-          maLHP: "2016-2017.2.TIN3053.002",
-          lopHP: "Các hệ quản trị cơ sở dữ liệu - Nhóm 2",
-          diemThi: 8.3,
-          tongDiem: 8.7,
-        },
-      ],
-    },
-  ]);
+  const [contentTable, setContentTable] = useState([]);
+
+  const [courses, setCourses] = useState([])
+  const [subjects, setSubjects] = useState([])
+
+  useEffect(() => {
+    Promise.all([
+      axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/subject`),
+      axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/course`),
+    ])
+    .then(([subjectRes,courseRes])=>{
+      setSubjects(subjectRes.data);
+      setCourses(courseRes.data);
+      let tableContentTemp = []
+      courseRes.data.forEach(course => {
+          let check = 0;
+          for(let tableSemester of tableContentTemp){
+            if(tableSemester.year === course.namHoc && tableSemester.semester === course.hocKy){
+              tableSemester.course.push({
+                maHP: course.maHP,
+                maLHP: course.maLHP,
+                lopHP: course.tenLHP,
+                diemThi: (course.diemThi2===null)?course.diemThi1:course.diemThi2,
+                tongDiem: (course.tongDiem2===null)?course.tongDiem1:course.tongDiem2,
+              });
+              check =1;
+            } 
+          }
+          if(check===0) {
+            tableContentTemp.push({
+              year: course.namHoc,
+              semester: course.hocKy,
+              course: [{
+                maHP: course.maHP,
+                maLHP: course.maLHP,
+                lopHP: course.tenLHP,
+                diemThi: (course.diemThi2===null)?course.diemThi1:course.diemThi2,
+                tongDiem: (course.tongDiem2===null)?course.tongDiem1:course.tongDiem2,
+              }]
+            })
+          }
+      })
+      setContentTable(tableContentTemp)
+    })
+  }, [])
   return (
     <View>
       <Table borderStyle={{ borderColor: "#777", borderWidth: 1 }}>
@@ -112,13 +97,27 @@ const HistoryOfStudying = ({ navigation }) => {
             index={index}
             lengthList={contentTable.length}
             onPressCourse={(index) => {
+              let courseParam = {}, subjectParam = {};
+              for(let course of courses) {
+                if(course.maLHP === item.course[index].maLHP){
+                  courseParam= {...course};
+                  break;
+                }
+              }
+              for(let subject of subjects) {
+                if(subject.maHP === item.course[index].maHP){
+                  subjectParam= {...subject};
+                  break;
+                }
+              }
               navigation.navigate("Course", {
-                course: item.course[index].maLHP,
+                course: courseParam,
+                subject: subjectParam
               });
             }}
             onPressSubject={(index) => {
               navigation.navigate("Subject", {
-                subject: item.course[index].maHP,
+                maHP: item.course[index].maHP,
               });
             }}
           />
@@ -154,7 +153,7 @@ export default HistoryOfStudyingStackScreen = ({ navigation }) => {
         name="Subject"
         component={Subject}
         options={({ route }) => ({
-          title: route.params.subject,
+          title: route.params.maHP,
           headerTitleAlign: "left",
           headerTitleStyle: {
             width: WIDTH - 100,
@@ -165,7 +164,7 @@ export default HistoryOfStudyingStackScreen = ({ navigation }) => {
         name="Course"
         component={Course}
         options={({ route }) => ({
-          title: route.params.course,
+          title: route.params.course.tenLHP,
           headerTitleAlign: "left",
           headerTitleStyle: {
             width: WIDTH - 100,

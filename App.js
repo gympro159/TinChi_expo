@@ -6,7 +6,10 @@ import thunk from "redux-thunk";
 import AppNavigator from "./AppNavigator";
 import Loading from "./screens/Loading";
 
-const store = createStore(appReducers, applyMiddleware(thunk));
+const store = createStore(
+  appReducers, 
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
+  applyMiddleware(thunk));
 
 export default App = () => {
   const [isLoading, setIsLoading] = useState(false);

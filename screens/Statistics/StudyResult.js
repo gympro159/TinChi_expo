@@ -19,6 +19,7 @@ import {
   Col,
 } from "react-native-table-component";
 import ListSemester from "../../components/ListSemesterResult/ListSemesterResult";
+import Course from "../Course/Course";
 
 const WIDTH = Dimensions.get("window").width;
 
@@ -109,7 +110,8 @@ const StudyResult = ({ navigation }) => {
             lengthList={contentTable.length}
             onPressSubject={(index) => {
               navigation.navigate("Subject", {
-                subject: item.course[index].tenHP
+                subject: item.course[index].tenHP,
+                maHP: item.course[index].maHP
               });
             }}
           />
@@ -146,6 +148,17 @@ export default StudyResultStackScreen = ({ navigation }) => {
         component={Subject}
         options={({ route }) => ({
           title: route.params.subject,
+          headerTitleAlign: "left",
+          headerTitleStyle: {
+            width: WIDTH - 100,
+          },
+        })}
+      />
+      <Stack.Screen
+        name="Course"
+        component={Course}
+        options={({ route }) => ({
+          title: route.params.course.tenLHP,
           headerTitleAlign: "left",
           headerTitleStyle: {
             width: WIDTH - 100,

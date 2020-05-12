@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, Button, StyleSheet } from 'react-native'
 import { createStackNavigator } from "@react-navigation/stack";
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from '@react-navigation/native';
 import Course from './../Course/Course'
 
@@ -25,7 +25,7 @@ export default ScheduleOfExamStackScreen = ( {navigation} ) => {
           name="ScheduleOfExam"
           component={ScheduleOfExam}
           options={{ headerTitleAlign: "center", title: "Lịch thi", headerLeft: (
-            () => <Icon onPress={() => navigation.dispatch(DrawerActions.openDrawer())} style={{marginLeft: 10}} name="bars" size={30}/>
+            () => <FontAwesome onPress={() => navigation.dispatch(DrawerActions.openDrawer())} style={{marginLeft: 10}} name="bars" size={30}/>
           )}}
         />
         <Stack.Screen

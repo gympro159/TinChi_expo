@@ -15,7 +15,7 @@ import AppDraw from "./AppDraw";
 export const AuthContext = createContext();
 const Stack = createStackNavigator();
 
-function AppNavigator({dataToken, studentProfile, postAccount, deleteToken, fetchStudentProfile}) {
+function AppNavigator({dataToken, postAccount, deleteToken}) {
   const [auth, dispatch] = useReducer(
     (prevState, action) => {
       switch (action.type) {
@@ -26,7 +26,6 @@ function AppNavigator({dataToken, studentProfile, postAccount, deleteToken, fetc
             isLoading: false,
           };
         case "SIGN_IN":
-          console.log(action.token);
           return {
             ...prevState,
             isSignout: false,
@@ -67,10 +66,11 @@ function AppNavigator({dataToken, studentProfile, postAccount, deleteToken, fetc
   const authContext = React.useMemo(
     () => ({
       signIn: (data) => {
-        postAccount(data);
-        console.log("postAccount");
-        dispatch({ type: "SIGN_IN", token: dataToken })
-        //fetchStudentProfile(dataToken);
+        const dp = (dttoken) => {
+          return dispatch({ type: "SIGN_IN", token: dttoken })
+        }
+        postAccount(data, dp);
+        //console.log("postAccount");
       },
       signOut: () => {
         AsyncStorage.removeItem("userToken");
@@ -84,7 +84,7 @@ function AppNavigator({dataToken, studentProfile, postAccount, deleteToken, fetc
     <AuthContext.Provider value={authContext}>
       <NavigationContainer>
         <Stack.Navigator>
-          {!auth.userToken||(Object.keys(auth.userToken).length===0)? (
+          {!auth.userToken || (Object.keys(auth.userToken).length===0)? ( 
             <Stack.Screen
               name="Login"
               component={Login}
@@ -94,7 +94,7 @@ function AppNavigator({dataToken, studentProfile, postAccount, deleteToken, fetc
             />
           ) : (
             <Stack.Screen
-              name="App"
+              name="AppDraw"
               component={AppDraw}
               options={{
                 headerShown: false,
@@ -116,8 +116,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch, props) => {
   return {
-    postAccount: (account) => {
-      dispatch(actPostAccountRequest(account));
+    postAccount: (account, dp) => {
+      dispatch(actPostAccountRequest(account, dp));
     },
     deleteToken: () => {
       dispatch(actDeleteToken())

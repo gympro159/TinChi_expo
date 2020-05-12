@@ -2,15 +2,11 @@ import React, { useEffect } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { connect } from "react-redux";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
 import { ScrollView } from "react-native-gesture-handler";
-import { actFetchStudentProfileRequest } from "./../../actions/index";
 
-const UserProfile = ({ navigation, studentProfile, dataToken, fetchStudentProfile }) => {
-  useEffect(() => {
-    fetchStudentProfile(dataToken);
-  }, []);
+const UserProfile = ({ navigation, studentProfile }) => {
   return (
     <View style={styles.container}>
       <Text style={{ fontSize: 20, fontWeight: "bold", color: "#004275" }}>
@@ -149,22 +145,13 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = (state) => {
   return {
-    dataToken: state.dataToken,
     studentProfile: state.studentProfile,
-  };
-};
-
-const mapDispatchToProps = (dispatch, props) => {
-  return {
-    fetchStudentProfile: (dataToken) => {
-      dispatch(actFetchStudentProfileRequest(dataToken));
-    },
   };
 };
 
 const UserProfileConnect = connect(
   mapStateToProps,
-  mapDispatchToProps
+  null
 )(UserProfile);
 
 const Stack = createStackNavigator();
@@ -179,7 +166,7 @@ export default UserProfileStackScreen = ({ navigation }) => {
           headerTitleAlign: "center",
           title: "Lý lịch cá nhân",
           headerLeft: () => (
-            <Icon
+            <FontAwesome
               onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
               style={{ marginLeft: 10 }}
               name="bars"

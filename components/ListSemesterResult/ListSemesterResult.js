@@ -31,9 +31,9 @@ export default ListSemester = ({ semesterContent, index, lengthList, onPressSubj
       let rowContent = [
         subjectCell(item.maHP, index),
         subjectCell(item.tenHP, index),
-        `${item.he10}`,
+        `${item.he10.toFixed(1)}`,
         `${item.diemChu}`,
-        `${item.he4}`
+        `${item.he4.toFixed(1)}`
       ];
       result.push(rowContent);
     });

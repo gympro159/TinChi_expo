@@ -2,8 +2,9 @@ import * as Types from "./../constants/ActionType";
 import callApi from "./../utils/apiCaller";
 import convertTime from "./../constants/common";
 import md5 from "md5";
+import { Alert } from "react-native";
 
-export const actPostAccountRequest = (account) => {
+export const actPostAccountRequest = (account, dp) => {
   var date = new Date();
   var appId = "TestApp";
   var time = convertTime(date);
@@ -19,21 +20,21 @@ export const actPostAccountRequest = (account) => {
     UserName: account.username,
     Password: md5(account.password),
   };
-  console.log("actPostAccountRequest");
+  //console.log("actPostAccountRequest");
   return async (dispatch) => {
-    var db = await callApi("account/authorize/student", "POST", body, header)
-    // .then(
-    //   (res) => {
-    //     dispatch(actGetToken(res.data.Data));
-    //   }
-    // ); 
-    await dispatch(actGetToken(db.data.Data))
+    callApi("account/authorize/student", "POST", body, header)
+      .then((res) => {
+        dp(res.data.Data);
+        dispatch(actFetchStudentProfileRequest(res.data.Data));
+        dispatch(actGetToken(res.data.Data));
+      }). catch(err =>{
+        account.setLoad()
+      });
   };
 };
 
 export const actGetToken = (dataToken) => {
-  console.log("actGetToken");
-  
+  //console.log("actGetToken");
   return {
     type: Types.GET_TOKEN,
     dataToken,
