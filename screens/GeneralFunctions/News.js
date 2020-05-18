@@ -25,9 +25,17 @@ const News = ({ navigation }) => {
 
   return (
     <View>
-      <StatusBar barStyle="dark-content" backgroundColor="#ecf0f1" />
-      <View style={{borderBottomColor: '#000', borderBottomWidth: 1}}>
-        <Text style={styles.titleHeader}>THÔNG BÁO</Text>
+      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "bold",
+            color: "#004275",
+            marginHorizontal: 10,
+          }}
+        >
+          THÔNG BÁO
+        </Text>
       </View>
       <FlatList
         data={newsContent}

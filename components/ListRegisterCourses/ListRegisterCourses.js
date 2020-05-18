@@ -21,23 +21,27 @@ import {
 
 const WIDTH = Dimensions.get("window").width;
 
-export default ListStudyTimes = ({
+export default ListRegisterCourses = ({
   course,
-  index,
-  lengthList,
+  subject,
   onPressCourse,
 }) => {
+  const [collapsed, setCollapsed] = useState(true);
 
-  const [collapsed, setCollapsed] = useState(
-    index === lengthList - 1 ? true : false
-  );
-  const [dataRows, setDataRows] = useState([
-    `${course.lanHoc}`,
-    `${course.diemQTHT===null?"":course.diemQTHT.toFixed(1)}`,
-    `${course.diemThi1===null?"":course.diemThi1.toFixed(1)}`,
-    `${course.tongDiem1===null?"":course.tongDiem1.toFixed(1)}`,
-    `${course.diemThi2===null?"":course.diemThi2.toFixed(1)}`,
-    `${course.tongDiem2===null?"":course.tongDiem2.toFixed(1)}`,
+  const mountSVRegister = (dk, tt ,td)=> {
+      return(
+        <Text style={{ textAlign: "center", color: "#337ab7", fontSize: 13 }}>
+        <Text style={{ fontWeight: "bold" }}>{dk}</Text>/
+        {tt}/{td}
+      </Text>
+      )
+  }
+
+  const [dataRow, setDataRow] = useState([
+    `${course.giangVien}`,
+    `${course.thoiKhoaBieu}`,
+    `${course.ngayHetHanDK}`,
+    mountSVRegister(course.svDaDangKy, subject.soSVToiThieu, subject.soSVToiDa)
   ]);
 
   return (
@@ -47,21 +51,23 @@ export default ListStudyTimes = ({
         onToggle={(isCollapsed) => setCollapsed(isCollapsed)}
       >
         <CollapseHeader style={styles.header}>
-          <Text style={styles.headerText}>{course.tenLHP}</Text>
+          <Text style={styles.headerText}>
+            <Text style={{ fontWeight: "bold" }}>{course.tenLHP}</Text>
+            {"\n"}
+            {course.maLHP}
+          </Text>
         </CollapseHeader>
         <CollapseBody>
           <TouchableOpacity onPress={() => onPressCourse()}>
             <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
               <Row
-                data={dataRows}
-                textStyle={{ textAlign: "center", color: "#337ab7" }}
+                data={dataRow}
+                textStyle={{ textAlign: "center", color: "#337ab7", fontSize: 13 }}
                 widthArr={[
-                  WIDTH * 0.16,
-                  WIDTH * 0.16,
-                  WIDTH * 0.17,
-                  WIDTH * 0.17,
-                  WIDTH * 0.17,
-                  WIDTH * 0.17,
+                  WIDTH * 0.3,
+                  WIDTH * 0.22,
+                  WIDTH * 0.23,
+                  WIDTH * 0.25,
                 ]}
               />
             </Table>
@@ -80,5 +86,6 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 15,
+    marginLeft: 4
   },
 });

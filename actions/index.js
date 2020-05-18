@@ -1,6 +1,6 @@
 import * as Types from "./../constants/ActionType";
 import callApi from "./../utils/apiCaller";
-import convertTime from "./../constants/common";
+import { convertTime } from "./../constants/common";
 import md5 from "md5";
 import { Alert } from "react-native";
 
@@ -25,10 +25,12 @@ export const actPostAccountRequest = (account, dp) => {
     callApi("account/authorize/student", "POST", body, header)
       .then((res) => {
         dp(res.data.Data);
+        dispatch(actFetchStudentAvatarRequest(res.data.Data));
         dispatch(actFetchStudentProfileRequest(res.data.Data));
         dispatch(actGetToken(res.data.Data));
-      }). catch(err =>{
-        account.setLoad()
+      })
+      .catch((err) => {
+        account.setLoad();
       });
   };
 };
@@ -70,5 +72,31 @@ export const actFetchStudentProfile = (studentProfile) => {
   return {
     type: Types.FETCH_STUDENT_PROFILE,
     studentProfile,
+  };
+};
+
+//Student Avatar
+export const actFetchStudentAvatarRequest = (dataToken) => {
+  var date = new Date();
+  var appId = dataToken.AppId;
+  var time = convertTime(date);
+
+  var header = {
+    "ums-application": appId,
+    "ums-time": time,
+    "ums-token": dataToken.Token,
+    "Content-Type": "application/json",
+  };
+  return (dispatch) => {
+    return callApi("account/photo", "GET", null, header).then((res) => {
+      dispatch(actFetchStudentAvatar(res.data.Data));
+    });
+  };
+};
+
+export const actFetchStudentAvatar = (avatar) => {
+  return {
+    type: Types.FETCH_STUDENT_AVATAR,
+    avatar,
   };
 };

@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
-  Dimensions
+  Dimensions,
 } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
@@ -16,9 +16,10 @@ import {
   TableWrapper,
   Row,
   Rows,
-  Col
+  Col,
 } from "react-native-table-component";
 import Course from "./../Course/Course";
+import Subject from "./../Subject/Subject";
 
 const WIDTH = Dimensions.get("window").width;
 
@@ -31,23 +32,17 @@ const TimeTable = ({ navigation }) => {
     return date;
   };
 
-  const cellContent = value => {
+  const cellContent = (value) => {
     if (value.length > 0) {
       return (
         <FlatList
           data={value}
           renderItem={({ item, index }) => (
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate("Course", {
-                  courseName: item.name
-                });
-              }}
-            >
+            <TouchableOpacity onPress={() => navigation.push("Course")}>
               <View
                 style={
                   value.length > 1 && index > 0
-                    ? { borderTopColor: "grey", borderTopWidth: 1 }
+                    ? { borderTopColor: "#dbdbdb", borderTopWidth: 0.5 }
                     : {}
                 }
               >
@@ -60,7 +55,7 @@ const TimeTable = ({ navigation }) => {
               </View>
             </TouchableOpacity>
           )}
-          keyExtractor={item => `${item.name}`}
+          keyExtractor={(item) => `${item.name}`}
           contentContainerStyle={{ paddingHorizontal: 16 }}
         />
       );
@@ -73,7 +68,7 @@ const TimeTable = ({ navigation }) => {
       let morning = [],
         afternoon = [],
         night = [];
-      timeTable[i].course.map(ACourse => {
+      timeTable[i].course.map((ACourse) => {
         if (ACourse.periodStart > 8) {
           night.push(ACourse);
         } else if (ACourse.periodStart > 4) {
@@ -84,7 +79,7 @@ const TimeTable = ({ navigation }) => {
         `${timeTable[i].weekDay}\n${timeTable[i].dateDay}`,
         cellContent(morning),
         cellContent(afternoon),
-        cellContent(night)
+        cellContent(night),
       ];
       content.push(contentADay);
     }
@@ -100,21 +95,21 @@ const TimeTable = ({ navigation }) => {
           name: "Lập trình hướng đối tượng",
           periodStart: 1,
           periodEnd: 2,
-          room: "Lab 5_CNTT"
+          room: "Lab 5_CNTT",
         },
         {
           name: "Cấu trúc dữ liệu và thuật toán",
           periodStart: 3,
           periodEnd: 4,
-          room: "Lab 1_CNTT"
+          room: "Lab 1_CNTT",
         },
         {
           name: "Nhập môn trí tuệ nhân tạo",
           periodStart: 9,
           periodEnd: 11,
-          room: "E404"
-        }
-      ]
+          room: "E404",
+        },
+      ],
     },
     {
       dateDay: "24/03/2020",
@@ -124,9 +119,9 @@ const TimeTable = ({ navigation }) => {
           name: "Lập trình ứng dụng di động",
           periodStart: 2,
           periodEnd: 4,
-          room: "Lab 3_CNTT"
-        }
-      ]
+          room: "Lab 3_CNTT",
+        },
+      ],
     },
     {
       dateDay: "25/03/2020",
@@ -136,14 +131,14 @@ const TimeTable = ({ navigation }) => {
           name: "Ngôn ngữ truy vấn có cấu trúc (SQL)",
           periodStart: 6,
           periodEnd: 8,
-          room: "Lab 2_CNTT"
-        }
-      ]
+          room: "Lab 2_CNTT",
+        },
+      ],
     },
     {
       dateDay: "26/03/2020",
       weekDay: "Thứ 5",
-      course: []
+      course: [],
     },
     {
       dateDay: "27/03/2020",
@@ -153,26 +148,26 @@ const TimeTable = ({ navigation }) => {
           name: "Những nguyên lý cơ bản của chủ nghĩa Mác-Lênin 2",
           periodStart: 9,
           periodEnd: 11,
-          room: "E304"
-        }
-      ]
+          room: "E304",
+        },
+      ],
     },
     {
       dateDay: "28/03/2020",
       weekDay: "Thứ 7",
-      course: []
+      course: [],
     },
     {
       dateDay: "29/03/2020",
       weekDay: "Chủ nhật",
-      course: []
-    }
+      course: [],
+    },
   ]);
   const [tableHead, setTableHead] = useState([
     "",
-    "BUỔI SÁNG",
-    "BUỔI CHIỀU",
-    "BUỔI TỐI"
+    "Buổi sáng",
+    "Buổi chiều",
+    "Buổi tối",
   ]);
   const [tableTitle, setTableTitle] = useState(() => dateTable());
 
@@ -182,19 +177,19 @@ const TimeTable = ({ navigation }) => {
     <View style={styles.container}>
       <ScrollView horizontal={true}>
         <View>
-          <TableWrapper borderStyle={{ borderColor: "grey", borderWidth: 2 }}>
+          <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
             <Row
               data={tableHead}
               style={styles.head}
               textStyle={styles.text}
-              widthArr={[107, 200, 200, 200]}
+              widthArr={[105, 200, 200, 200]}
             />
-          </TableWrapper>
+          </Table>
           <ScrollView vertical={true}>
-            <Table borderStyle={{ borderColor: "grey", borderWidth: 2 }}>
+            <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
               <Rows
                 data={content}
-                textStyle={styles.text}
+                textStyle={styles.text2}
                 widthArr={[105, 200, 200, 200]}
               />
             </Table>
@@ -223,19 +218,16 @@ export default TimeTableStackScreen = ({ navigation }) => {
               name="bars"
               size={30}
             />
-          )
+          ),
         }}
       />
       <Stack.Screen
         name="Course"
-        component={Course}
-        options={({ route }) => ({
-          title: route.params.courseName,
-          headerTitleAlign: "left",
-          headerTitleStyle: {
-            width: WIDTH - 100
-          }
-        })}
+        component={Subject}
+        options={{
+          headerTitleAlign: "center",
+          title: "Thông tin Lớp học phần",
+        }}
       />
     </Stack.Navigator>
   );
@@ -245,14 +237,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 5,
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
   },
   head: {
     height: 40,
-    backgroundColor: "#f1f8ff"
+    backgroundColor: "#d2d2d2",
   },
   text: {
     margin: 6,
+    textAlign: "center",
+    color: "#000"
+  },
+  text2: {
+    margin: 6,
     textAlign: "center"
-  }
+  },
 });

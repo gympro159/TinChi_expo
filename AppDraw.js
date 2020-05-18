@@ -7,6 +7,8 @@ import {
   StyleSheet,
   Alert,
   TouchableOpacity,
+  Picker,
+  Dimensions
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { connect } from "react-redux";
@@ -39,6 +41,7 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 
+const { width, height } = Dimensions.get("window");
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -163,47 +166,106 @@ const StudyingTabScreen = () => {
 };
 
 DrawerContent = (props) => {
+  //console.log(props.avatar);
   const { signOut } = useContext(AuthContext);
+  const [hocKy, sethocKy] = useState("Học kỳ 2 - 2019-2020");
   return (
-    <DrawerContentScrollView {...props} style={{ flex: 1 }}>
-      <ImageBackground
-        source={require("./assets/bg-avatar.jpg")}
-        style={{ width: undefined, padding: 16 }}
-      >
-        <Image source={require("./assets/avatar.jpg")} style={styles.profile} />
-        <View style={{ flexDirection: "row", alignItems: "center"}}>
-          <Text style={styles.name}>{props.name} </Text>
-          <TouchableOpacity
-            activeOpacity={0.1}
-            onPress={() =>
-              Alert.alert(
-                "Đăng xuất",
-                "Bạn xác nhận muốn đăng xuất?",
-                [
-                  { text: "OK", onPress: () => signOut() },
-                  {
-                    text: "Cancel",
-                    style: "cancel",
-                  },
-                ],
-                { cancelable: false }
-              )
-            }
+    <DrawerContentScrollView {...props} style={{ height: height }}>
+      <View style={{ height: height, justifyContent: "space-between", marginTop: -5 }}>
+        <View>
+          <ImageBackground
+            source={require("./assets/bg-avatar.jpg")}
+            style={{ width: undefined, padding: 16 }}
           >
-            <FontAwesome name="sign-out" size={25} color="red"/>
-          </TouchableOpacity>
+            <Image
+              source={
+                props.avatar
+                  ? { uri: `data:image/png;base64,${props.avatar}` }
+                  : require("./assets/avatar-default.png")
+              }
+              style={styles.profile}
+            />
+            {/* <Image source={require("./assets/avatar.jpg")} style={styles.profile} /> */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <Text style={styles.name}>{props.name} </Text>
+              <TouchableOpacity
+                activeOpacity={0.1}
+                onPress={() =>
+                  Alert.alert(
+                    "Đăng xuất",
+                    "Bạn xác nhận muốn đăng xuất?",
+                    [
+                      { text: "Đồng ý", onPress: () => signOut() },
+                      {
+                        text: "Không",
+                        style: "cancel",
+                      },
+                    ],
+                    { cancelable: false }
+                  )
+                }
+              >
+                <FontAwesome name="sign-out" size={25} color="red" />
+              </TouchableOpacity>
+            </View>
+          </ImageBackground>
+          <DrawerItemList {...props} />
         </View>
-      </ImageBackground>
-      <DrawerItemList {...props} />
-      <View style={{ alignItems: "center", marginTop: 250 }}>
-        <Image source={require("./assets/logo.png")} />
+        <View
+          style={{
+            borderWidth: 1,
+            borderRadius: 6,
+            borderColor: "#dbdbdb",
+            backgroundColor: "#f2f2f2",
+            marginHorizontal: 10,
+            marginBottom: 0
+          }}
+        >
+          <Picker
+            selectedValue={hocKy}
+            style={{ height: 40, width: undefined }}
+            onValueChange={(value) => sethocKy(value)}
+          >
+            <Picker.Item
+              label="Học kỳ 2 - 2019-2020"
+              value={"Học kỳ 2 - 2019-2020"}
+            />
+            <Picker.Item
+              label="Học kỳ 1 - 2019-2020"
+              value={"Học kỳ 1 - 2019-2020"}
+            />
+            <Picker.Item
+              label="Học kỳ 2 - 2018-2019"
+              value={"Học kỳ 2 - 2018-2019"}
+            />
+            <Picker.Item
+              label="Học kỳ 1 - 2018-2019"
+              value={"Học kỳ 1 - 2018-2019"}
+            />
+            <Picker.Item
+              label="Học kỳ 2 - 2017-2018"
+              value={"Học kỳ 2 - 2017-2018"}
+            />
+            <Picker.Item
+              label="Học kỳ 1 - 2017-2018"
+              value={"Học kỳ 1 - 2017-2018"}
+            />
+          </Picker>
+        </View>
       </View>
     </DrawerContentScrollView>
   );
 };
 
-const AppDraw = ({ studentProfile }) => {
-  var name = studentProfile.HoVaTen;
+const AppDraw = ({ studentProfile, avatar }) => {
+  var name = studentProfile.HoVaTen,
+    avatar;
   return (
     <Drawer.Navigator
       screenOptions={({ route }) => ({
@@ -234,7 +296,9 @@ const AppDraw = ({ studentProfile }) => {
         activeTintColor: "blue",
         inactiveTintColor: "black",
       }}
-      drawerContent={(props) => <DrawerContent {...props} name={name} />}
+      drawerContent={(props) => (
+        <DrawerContent {...props} name={name} avatar={avatar} />
+      )}
     >
       <Drawer.Screen
         name="Các chức năng chung"
@@ -255,9 +319,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profile: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 3,
     borderColor: "#FFF",
   },
@@ -266,12 +330,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "800",
     marginVertical: 8,
+    paddingRight: 0,
   },
 });
 
 const mapStateToProps = (state) => {
   return {
     studentProfile: state.studentProfile,
+    avatar: state.avatar,
   };
 };
 

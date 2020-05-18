@@ -26,8 +26,8 @@ export default ListNews = (props) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderTopColor: "#000",
-    borderTopWidth: 1,
+    borderTopColor: "#dbdbdb",
+    borderTopWidth: 0.5,
     paddingTop: 20
   },
   titleContainer: {

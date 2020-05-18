@@ -20,14 +20,14 @@ export default ListSemester = ({ semesterContent, index, lengthList, onPressCour
   const subjectCell = (maHP, index) => {
     return (
       <TouchableOpacity onPress={() => onPressSubject(index)}>
-        <Text style={{ color: "#337ab7" }}>{maHP}</Text>
+        <Text style={{ color: "#337ab7", textAlign: "center" }}>{maHP}</Text>
       </TouchableOpacity>
     );
   };
   const courseCell = (LopHP, index) => {
     return (
       <TouchableOpacity onPress={() => onPressCourse(index)}>
-        <Text style={{ color: "#337ab7" }}>{LopHP}</Text>
+        <Text style={{ color: "#337ab7", textAlign: "center" }}>{LopHP}</Text>
       </TouchableOpacity>
     );
   };
@@ -60,7 +60,7 @@ export default ListSemester = ({ semesterContent, index, lengthList, onPressCour
           </Text>
         </CollapseHeader>
         <CollapseBody>
-          <Table borderStyle={{ borderColor: "#777", borderWidth: 1 }}>
+          <Table borderStyle={{ borderColor: "#DBDBDB", borderWidth: 1 }}>
             <Rows
               data={dataRows}
               textStyle={{textAlign: "center"}}
@@ -77,7 +77,9 @@ const styles = StyleSheet.create({
   collapseContainer: {},
   header: {
     backgroundColor: "#f2f2f2",
-    borderWidth: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: "#dbdbdb",
+    marginLeft: 5
   },
   headerText: {
     fontSize: 15,

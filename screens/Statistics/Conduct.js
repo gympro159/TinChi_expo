@@ -17,7 +17,7 @@ const Conduct = ({ navigation }) => {
   const tableTitle = [
     "Học kỳ, Năm học",
     "Lớp sinh hoạt",
-    "Giáo viên CVHT/CN",
+    "Giáo viên CVHT",
     "Điểm RL",
     "Xếp loại",
   ];
@@ -77,7 +77,7 @@ const Conduct = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Table borderStyle={{ borderColor: "grey", borderWidth: 2 }}>
+      <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
         <Row
           data={tableTitle}
           style={styles.head}
@@ -92,7 +92,7 @@ const Conduct = ({ navigation }) => {
         />
       </Table>
       <ScrollView>
-        <Table borderStyle={{ borderColor: "grey", borderWidth: 2 }}>
+        <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
           <Rows
             data={tableContent}
             textStyle={styles.text}
@@ -142,10 +142,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   head: {
-    backgroundColor: "#f1f8ff",
+    backgroundColor: "#d2d2d2",
   },
   text: {
     margin: 6,
-    textAlign: "center",
+    textAlign: "center"
   },
 });

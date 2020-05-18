@@ -5,19 +5,18 @@ import {
   Dimensions,
   ImageBackground,
   Image,
-  Alert
+  Alert,
 } from "react-native";
-import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import { Input, Button, Text } from "react-native-elements";
 import { AuthContext } from "./../../AppNavigator";
 
 const { width, height } = Dimensions.get("window");
 
-export default  Login = () => {
+export default Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const { signIn } = useContext(AuthContext);
 
   return (
@@ -36,6 +35,7 @@ export default  Login = () => {
         <View style={styles.container}>
           <Text h4>Sinh viên</Text>
           <Input
+            disabled={loading}
             onChangeText={setUsername}
             value={username}
             style={styles.textInput}
@@ -48,8 +48,13 @@ export default  Login = () => {
                 style={{ marginRight: 10 }}
               />
             }
+            returnKeyType = { "next" }
+            onSubmitEditing={() => { secondTextInput.focus(); }}
+            blurOnSubmit={false}
           />
           <Input
+            ref={(input) => { secondTextInput = input; }}
+            disabled={loading}
             onChangeText={setPassword}
             value={password}
             style={styles.textInput}
@@ -67,33 +72,35 @@ export default  Login = () => {
           <Button
             title="Đăng nhập"
             buttonStyle={styles.buttonSubmit}
+            disabledStyle={styles.buttonSubmitDisabled}
             onPress={() => {
               setLoading(true);
-              if(username === "" || password === "")
-              {
+              if (username === "" || password === "") {
                 Alert.alert(
                   "Thông báo",
                   "Mã sinh viên và Mật khẩu không được để trống",
-                  [
-                    { text: "OK", onPress: () => setLoading(false) },
-                  ],
+                  [{ text: "OK", onPress: () => setLoading(false) }],
                   { cancelable: false }
-                )
+                );
               } else {
-              const setLoad = () => {
-                Alert.alert(
-                  "Thông báo",
-                  "Sai Mã sinh viên hoặc Mật khẩu",
-                  [
-                    { text: "OK", onPress: () => setLoading(false) },
-                  ],
-                  { cancelable: false }
-                )
+                const setLoad = () => {
+                  Alert.alert(
+                    "Thông báo",
+                    "Sai Mã sinh viên hoặc Mật khẩu",
+                    [
+                      {
+                        text: "OK",
+                        onPress: () => setLoading(false),
+                      },
+                    ],
+                    { cancelable: false }
+                  );
+                };
+                signIn({ username, password, setLoad });
               }
-              signIn({ username, password, setLoad });
-            }
-          }}
+            }}
             loading={loading}
+            disabled={loading}
           />
         </View>
       </ImageBackground>
@@ -144,7 +151,15 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 20,
     borderRadius: 10,
-    width: 130
+    width: 130,
+    backgroundColor: "#0080ff"
+  },
+  buttonSubmitDisabled: {
+    padding: 10,
+    marginTop: 20,
+    borderRadius: 10,
+    width: 130,
+    backgroundColor: "#0080ff"
   },
 });
 

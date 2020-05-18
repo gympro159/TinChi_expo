@@ -10,7 +10,7 @@ import {
 import { createStackNavigator } from "@react-navigation/stack";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { DrawerActions } from "@react-navigation/native";
-import Course from "./../Course/Course";
+import CourseStackScreen from "./../Course/Course";
 import Subject from "./../Subject/Subject";
 import axios from "axios";
 import {
@@ -35,52 +35,62 @@ const HistoryOfStudying = ({ navigation }) => {
 
   const [contentTable, setContentTable] = useState([]);
 
-  const [courses, setCourses] = useState([])
-  const [subjects, setSubjects] = useState([])
+  const [courses, setCourses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
 
   useEffect(() => {
     Promise.all([
       axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/subject`),
       axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/course`),
-    ])
-    .then(([subjectRes,courseRes])=>{
+    ]).then(([subjectRes, courseRes]) => {
       setSubjects(subjectRes.data);
       setCourses(courseRes.data);
-      let tableContentTemp = []
-      courseRes.data.forEach(course => {
-          let check = 0;
-          for(let tableSemester of tableContentTemp){
-            if(tableSemester.year === course.namHoc && tableSemester.semester === course.hocKy){
-              tableSemester.course.push({
+      let tableContentTemp = [];
+      courseRes.data.forEach((course) => {
+        let check = 0;
+        for (let tableSemester of tableContentTemp) {
+          if (
+            tableSemester.year === course.namHoc &&
+            tableSemester.semester === course.hocKy
+          ) {
+            tableSemester.course.push({
+              maHP: course.maHP,
+              maLHP: course.maLHP,
+              lopHP: course.tenLHP,
+              diemThi:
+                course.diemThi2 === null ? course.diemThi1 : course.diemThi2,
+              tongDiem:
+                course.tongDiem2 === null ? course.tongDiem1 : course.tongDiem2,
+            });
+            check = 1;
+          }
+        }
+        if (check === 0) {
+          tableContentTemp.push({
+            year: course.namHoc,
+            semester: course.hocKy,
+            course: [
+              {
                 maHP: course.maHP,
                 maLHP: course.maLHP,
                 lopHP: course.tenLHP,
-                diemThi: (course.diemThi2===null)?course.diemThi1:course.diemThi2,
-                tongDiem: (course.tongDiem2===null)?course.tongDiem1:course.tongDiem2,
-              });
-              check =1;
-            } 
-          }
-          if(check===0) {
-            tableContentTemp.push({
-              year: course.namHoc,
-              semester: course.hocKy,
-              course: [{
-                maHP: course.maHP,
-                maLHP: course.maLHP,
-                lopHP: course.tenLHP,
-                diemThi: (course.diemThi2===null)?course.diemThi1:course.diemThi2,
-                tongDiem: (course.tongDiem2===null)?course.tongDiem1:course.tongDiem2,
-              }]
-            })
-          }
-      })
-      setContentTable(tableContentTemp)
-    })
-  }, [])
+                diemThi:
+                  course.diemThi2 === null ? course.diemThi1 : course.diemThi2,
+                tongDiem:
+                  course.tongDiem2 === null
+                    ? course.tongDiem1
+                    : course.tongDiem2,
+              },
+            ],
+          });
+        }
+      });
+      setContentTable(tableContentTemp);
+    });
+  }, []);
   return (
     <View>
-      <Table borderStyle={{ borderColor: "#777", borderWidth: 1 }}>
+      <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
         <Row
           data={titleTable}
           style={styles.titleTable}
@@ -97,22 +107,27 @@ const HistoryOfStudying = ({ navigation }) => {
             index={index}
             lengthList={contentTable.length}
             onPressCourse={(index) => {
-              let courseParam = {}, subjectParam = {};
-              for(let course of courses) {
-                if(course.maLHP === item.course[index].maLHP){
-                  courseParam= {...course};
+              let courseParam = {},
+                subjectParam = {};
+              for (let course of courses) {
+                if (course.maLHP === item.course[index].maLHP) {
+                  courseParam = { ...course };
                   break;
                 }
               }
-              for(let subject of subjects) {
-                if(subject.maHP === item.course[index].maHP){
-                  subjectParam= {...subject};
+              for (let subject of subjects) {
+                if (subject.maHP === item.course[index].maHP) {
+                  subjectParam = { ...subject };
                   break;
                 }
               }
-              navigation.navigate("Course", {
+              navigation.navigate("CourseStackScreen", {
                 course: courseParam,
-                subject: subjectParam
+                screen: "Course",
+                params: {
+                  course: courseParam,
+                  subject: subjectParam,
+                },
               });
             }}
             onPressSubject={(index) => {
@@ -161,8 +176,8 @@ export default HistoryOfStudyingStackScreen = ({ navigation }) => {
         })}
       />
       <Stack.Screen
-        name="Course"
-        component={Course}
+        name="CourseStackScreen"
+        component={CourseStackScreen}
         options={({ route }) => ({
           title: route.params.course.tenLHP,
           headerTitleAlign: "left",
@@ -177,7 +192,7 @@ export default HistoryOfStudyingStackScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   titleTable: {
-    marginTop: 20,
+    marginTop: 5,
     backgroundColor: "#d2d2d2",
   },
   titleTableText: {

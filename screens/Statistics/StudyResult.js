@@ -28,9 +28,9 @@ const StudyResult = ({ navigation }) => {
   const [titleTable, setTitleTable] = useState([
     "Mã HP",
     "Tên Học phần",
-    "Hệ 10",
-    "Đ.Chữ",
-    "Hệ 4"
+    "Hệ\n10",
+    "Điểm\nchữ",
+    "Hệ\n4"
   ]);
 
   const [contentTable, setContentTable] = useState([
@@ -92,7 +92,7 @@ const StudyResult = ({ navigation }) => {
   ]);
   return (
     <View>
-      <TableWrapper borderStyle={{ borderColor: "#777", borderWidth: 1 }}>
+      <TableWrapper borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
         <Row
           data={titleTable}
           style={styles.titleTable}
@@ -171,7 +171,7 @@ export default StudyResultStackScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   titleTable: {
-    marginTop: 20,
+    marginTop: 5,
     backgroundColor: "#d2d2d2",
   },
   titleTableText: {

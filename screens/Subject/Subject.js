@@ -95,47 +95,58 @@ export default Subject = ({ navigation, route }) => {
           <Text style={styles.label}>Đơn vị phụ trách: </Text>
           <Text style={styles.input}>{subject.donViPhuTrach}</Text>
         </View>
-        <Text style={styles.title}>
-          Lịch sử quá trình học đối với học phần:
-        </Text>
-        <TableWrapper borderStyle={{ borderColor: "#777", borderWidth: 1 }}>
-          <Row
-            data={titleTable}
-            style={styles.titleTable}
-            textStyle={styles.titleTableText}
-            widthArr={[WIDTH * 0.32, WIDTH * 0.34, WIDTH * 0.34]}
-          />
-          <Row
-            data={titleTable2}
-            style={styles.titleTable}
-            textStyle={styles.titleTableText}
-            widthArr={[
-              WIDTH * 0.16,
-              WIDTH * 0.16,
-              WIDTH * 0.17,
-              WIDTH * 0.17,
-              WIDTH * 0.17,
-              WIDTH * 0.17,
-            ]}
-          />
-        </TableWrapper>
-        <FlatList
-          data={courses}
-          renderItem={({ item, index }) => (
-            <ListStudyTimes
-              course={item}
-              index={index}
-              lengthList={courses.length}
-              onPressCourse={() => {
-                navigation.navigate("Course", {
-                  course: item,
-                  subject: subject
-                });
-              }}
+
+        {subject.daDK && (
+          <>
+            <Text style={styles.title}>
+              Lịch sử quá trình học đối với học phần:
+            </Text>
+            <TableWrapper
+              borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}
+            >
+              <Row
+                data={titleTable}
+                style={styles.titleTable}
+                textStyle={styles.titleTableText}
+                widthArr={[WIDTH * 0.32, WIDTH * 0.34, WIDTH * 0.34]}
+              />
+              <Row
+                data={titleTable2}
+                style={styles.titleTable}
+                textStyle={styles.titleTableText}
+                widthArr={[
+                  WIDTH * 0.16,
+                  WIDTH * 0.16,
+                  WIDTH * 0.17,
+                  WIDTH * 0.17,
+                  WIDTH * 0.17,
+                  WIDTH * 0.17,
+                ]}
+              />
+            </TableWrapper>
+            <FlatList
+              data={courses}
+              renderItem={({ item, index }) => (
+                <ListStudyTimes
+                  course={item}
+                  index={index}
+                  lengthList={courses.length}
+                  onPressCourse={() => {
+                    navigation.navigate("CourseStackScreen", {
+                      course: item,
+                      screen: "Course",
+                      params: {
+                        course: item,
+                        subject: subject,
+                      },
+                    });
+                  }}
+                />
+              )}
+              keyExtractor={(item) => `${item.maLHP}`}
             />
-          )}
-          keyExtractor={(item) => `${item.maLHP}`}
-        />
+          </>
+        )}
         <Text style={styles.title}>
           Định mức sinh viên dự kiến khi mở lớp học phần:
         </Text>
@@ -159,8 +170,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: "row",
-    borderBottomColor: "#777",
-    borderBottomWidth: 1,
+    borderBottomColor: "#dbdbdb",
+    borderBottomWidth: 0.5,
     marginBottom: 5,
   },
   title: {

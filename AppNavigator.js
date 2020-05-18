@@ -2,7 +2,7 @@ import React, { useState, useReducer, useEffect, createContext } from "react";
 import Axios from "axios";
 import { AsyncStorage } from "react-native";
 import { connect } from "react-redux";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme  } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import {
   actPostAccountRequest,
@@ -14,6 +14,14 @@ import AppDraw from "./AppDraw";
 
 export const AuthContext = createContext();
 const Stack = createStackNavigator();
+
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#fff'
+  },
+};
 
 function AppNavigator({dataToken, postAccount, deleteToken}) {
   const [auth, dispatch] = useReducer(
@@ -82,7 +90,9 @@ function AppNavigator({dataToken, postAccount, deleteToken}) {
   );
   return (
     <AuthContext.Provider value={authContext}>
-      <NavigationContainer>
+      <NavigationContainer
+        theme={MyTheme}
+      >
         <Stack.Navigator>
           {!auth.userToken || (Object.keys(auth.userToken).length===0)? ( 
             <Stack.Screen

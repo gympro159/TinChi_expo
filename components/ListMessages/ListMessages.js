@@ -51,8 +51,8 @@ export default ListMessages = (props) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderTopColor: "#000",
-    borderTopWidth: 1,
+    borderTopColor: "#dbdbdb",
+    borderTopWidth: 0.5,
     paddingTop: 20,
     paddingBottom: 5,
   },
