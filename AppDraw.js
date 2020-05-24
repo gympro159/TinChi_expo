@@ -8,11 +8,21 @@ import {
   Alert,
   TouchableOpacity,
   Picker,
-  Dimensions
+  Dimensions,
 } from "react-native";
+import { Badge } from "react-native-elements";
 import { FontAwesome } from "@expo/vector-icons";
 import { connect } from "react-redux";
 import { AuthContext } from "./AppNavigator";
+
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "#fff",
+  },
+};
+
 //Account
 import UserProfileStackScreen from "./screens/Account/UserProfile";
 import ChangePasswordStackScreen from "./screens/Account/ChangePassword";
@@ -32,7 +42,11 @@ import ModulesStackScreen from "./screens/Studying/Modules";
 import RegisteredCoursesStackScreen from "./screens/Studying/RegisteredCourses";
 import ScheduleOfExamStackScreen from "./screens/Studying/ScheduleOfExam";
 
-import { NavigationContainer } from "@react-navigation/native";
+//Tuition
+import HistoryTuitionStackScreen from "./screens/Tuition/HistoryTuition";
+import PaymentStackScreen from "./screens/Tuition/Payment";
+
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   createDrawerNavigator,
@@ -85,7 +99,23 @@ const GeneralFunctionsTabScreen = () => {
           } else if (route.name === "Tin nhắn") {
             iconName = "envelope";
           }
-          return <FontAwesome name={iconName} size={24} color={color} />;
+          return route.name === "Tin nhắn" ? (
+            <View>
+              <FontAwesome
+                style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
+                name={iconName}
+                size={24}
+                color={color}
+              />
+              <Badge
+                value="1"
+                status="error"
+                containerStyle={{ position: "absolute", top: -2, left: 30 }}
+              />
+            </View>
+          ) : (
+            <FontAwesome name={iconName} size={24} color={color} />
+          );
         },
       })}
       tabBarOptions={{
@@ -165,13 +195,51 @@ const StudyingTabScreen = () => {
   );
 };
 
+const TuitionTabScreen = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color }) => {
+          let iconName;
+          color = focused ? "blue" : "gray";
+          if (route.name === "Nộp học phí trực tuyến") {
+            iconName = "usd";
+          } else if (route.name === "Lịch sử nộp học phí") {
+            iconName = "filter";
+          }
+          return <FontAwesome name={iconName} size={24} color={color} />;
+        },
+      })}
+      tabBarOptions={{
+        activeTintColor: "blue",
+        inactiveTintColor: "gray",
+      }}
+    >
+      <Tab.Screen
+        name="Lịch sử nộp học phí"
+        component={HistoryTuitionStackScreen}
+      />
+      <Tab.Screen
+        name="Nộp học phí trực tuyến"
+        component={PaymentStackScreen}
+      />
+    </Tab.Navigator>
+  );
+};
+
 DrawerContent = (props) => {
   //console.log(props.avatar);
   const { signOut } = useContext(AuthContext);
   const [hocKy, sethocKy] = useState("Học kỳ 2 - 2019-2020");
   return (
     <DrawerContentScrollView {...props} style={{ height: height }}>
-      <View style={{ height: height, justifyContent: "space-between", marginTop: -5 }}>
+      <View
+        style={{
+          height: height,
+          justifyContent: "space-between",
+          marginTop: -5,
+        }}
+      >
         <View>
           <ImageBackground
             source={require("./assets/bg-avatar.jpg")}
@@ -224,7 +292,7 @@ DrawerContent = (props) => {
             borderColor: "#dbdbdb",
             backgroundColor: "#f2f2f2",
             marginHorizontal: 10,
-            marginBottom: 0
+            marginBottom: 0,
           }}
         >
           <Picker
@@ -267,50 +335,69 @@ const AppDraw = ({ studentProfile, avatar }) => {
   var name = studentProfile.HoVaTen,
     avatar;
   return (
-    <Drawer.Navigator
-      screenOptions={({ route }) => ({
-        drawerIcon: ({ focused, color }) => {
-          let iconName;
-          color = focused ? "blue" : "black";
+    <NavigationContainer theme={MyTheme}>
+      <Drawer.Navigator
+        screenOptions={({ route }) => ({
+          drawerIcon: ({ focused, color }) => {
+            let iconName;
+            color = focused ? "blue" : "black";
 
-          if (route.name === "Các chức năng chung") {
-            iconName = "home";
-          } else if (route.name === "Tài khoản") {
-            iconName = "vcard";
-          } else if (route.name === "Kế hoạch học tập") {
-            iconName = "book";
-          } else if (route.name === "Số liệu - Tổng hợp") {
-            iconName = "bar-chart";
-          }
-          return (
-            <FontAwesome
-              style={{ marginLeft: 10 }}
-              name={iconName}
-              size={30}
-              color={color}
-            />
-          );
-        },
-      })}
-      drawerContentOptions={{
-        activeTintColor: "blue",
-        inactiveTintColor: "black",
-      }}
-      drawerContent={(props) => (
-        <DrawerContent {...props} name={name} avatar={avatar} />
-      )}
-    >
-      <Drawer.Screen
-        name="Các chức năng chung"
-        component={GeneralFunctionsTabScreen}
-      />
-      <Drawer.Screen name="Tài khoản" component={AccountTabScreen} />
-      <Drawer.Screen name="Kế hoạch học tập" component={StudyingTabScreen} />
-      <Drawer.Screen
-        name="Số liệu - Tổng hợp"
-        component={StatisticsTabScreen}
-      />
-    </Drawer.Navigator>
+            if (route.name === "Các chức năng chung") {
+              iconName = "home";
+            } else if (route.name === "Tài khoản") {
+              iconName = "vcard";
+            } else if (route.name === "Kế hoạch học tập") {
+              iconName = "book";
+            } else if (route.name === "Số liệu - Tổng hợp") {
+              iconName = "bar-chart";
+            } else if (route.name === "Học phí- Lệ phí") {
+              iconName = "money";
+            }
+            return route.name === "Các chức năng chung" ? (
+              <View>
+                <FontAwesome
+                  style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
+                  name={iconName}
+                  size={30}
+                  color={color}
+                />
+                <Badge
+                  value="1"
+                  status="error"
+                  containerStyle={{ position: "absolute", top: -4, left: 30 }}
+                />
+              </View>
+            ) : (
+              <FontAwesome
+                style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
+                name={iconName}
+                size={30}
+                color={color}
+              />
+            );
+          },
+        })}
+        drawerContentOptions={{
+          activeTintColor: "blue",
+          inactiveTintColor: "black",
+        }}
+        drawerContent={(props) => (
+          <DrawerContent {...props} name={name} avatar={avatar} />
+        )}
+      >
+        <Drawer.Screen
+          name="Các chức năng chung"
+          component={GeneralFunctionsTabScreen}
+        />
+        <Drawer.Screen name="Tài khoản" component={AccountTabScreen} />
+        <Drawer.Screen name="Kế hoạch học tập" component={StudyingTabScreen} />
+        <Drawer.Screen
+          name="Số liệu - Tổng hợp"
+          component={StatisticsTabScreen}
+        />
+        <Drawer.Screen name="Học phí- Lệ phí" component={TuitionTabScreen} />
+      </Drawer.Navigator>
+    </NavigationContainer>
   );
 };
 

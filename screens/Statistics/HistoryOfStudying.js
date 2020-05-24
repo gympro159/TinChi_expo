@@ -90,6 +90,18 @@ const HistoryOfStudying = ({ navigation }) => {
   }, []);
   return (
     <View>
+      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "bold",
+            color: "#004275",
+            marginHorizontal: 10,
+          }}
+        >
+         LỊCH SỬ QUÁ TRÌNH HỌC TẬP
+        </Text>
+      </View>
       <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
         <Row
           data={titleTable}

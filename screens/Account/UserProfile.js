@@ -385,7 +385,7 @@ const EditProfile = ({ route }) => {
                 },
                 // ... You can check the source to find the other keys.
               }}
-              onDateChange={setNgaySinh}
+              onDateChange={(value) => setNgaySinh(value)}
             />
           </View>
 
@@ -618,7 +618,7 @@ const EditProfile = ({ route }) => {
                   fontSize: 17,
                 },
               }}
-              onDateChange={setNgayCapCMND}
+              onDateChange={value => setNgayCapCMND(value)}
             />
           </View>
 

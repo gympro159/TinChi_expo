@@ -19,7 +19,7 @@ import {
   Col,
 } from "react-native-table-component";
 import ListSemester from "../../components/ListSemesterResult/ListSemesterResult";
-import Course from "../Course/Course";
+import CourseStackScreen from "../Course/Course";
 
 const WIDTH = Dimensions.get("window").width;
 
@@ -92,6 +92,18 @@ const StudyResult = ({ navigation }) => {
   ]);
   return (
     <View>
+      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "bold",
+            color: "#004275",
+            marginHorizontal: 10,
+          }}
+        >
+         KẾT QUẢ HỌC TẬP
+        </Text>
+      </View>
       <TableWrapper borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
         <Row
           data={titleTable}
@@ -155,8 +167,8 @@ export default StudyResultStackScreen = ({ navigation }) => {
         })}
       />
       <Stack.Screen
-        name="Course"
-        component={Course}
+        name="CourseStackScreen"
+        component={CourseStackScreen}
         options={({ route }) => ({
           title: route.params.course.tenLHP,
           headerTitleAlign: "left",

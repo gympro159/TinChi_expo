@@ -2,7 +2,7 @@ import React, { useState, useReducer, useEffect, createContext } from "react";
 import Axios from "axios";
 import { AsyncStorage } from "react-native";
 import { connect } from "react-redux";
-import { NavigationContainer, DefaultTheme  } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import {
   actPostAccountRequest,
@@ -19,11 +19,11 @@ const MyTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: '#fff'
+    background: "#fff",
   },
 };
 
-function AppNavigator({dataToken, postAccount, deleteToken}) {
+function AppNavigator({ dataToken, postAccount, deleteToken }) {
   const [auth, dispatch] = useReducer(
     (prevState, action) => {
       switch (action.type) {
@@ -75,52 +75,34 @@ function AppNavigator({dataToken, postAccount, deleteToken}) {
     () => ({
       signIn: (data) => {
         const dp = (dttoken) => {
-          return dispatch({ type: "SIGN_IN", token: dttoken })
-        }
+          return dispatch({ type: "SIGN_IN", token: dttoken });
+        };
         postAccount(data, dp);
         //console.log("postAccount");
       },
       signOut: () => {
         AsyncStorage.removeItem("userToken");
         deleteToken();
-        dispatch({ type: "SIGN_OUT" })
+        dispatch({ type: "SIGN_OUT" });
       },
     }),
     []
   );
   return (
     <AuthContext.Provider value={authContext}>
-      <NavigationContainer
-        theme={MyTheme}
-      >
-        <Stack.Navigator>
-          {!auth.userToken || (Object.keys(auth.userToken).length===0)? ( 
-            <Stack.Screen
-              name="Login"
-              component={Login}
-              options={{
-                headerShown: false,
-              }}
-            />
-          ) : (
-            <Stack.Screen
-              name="AppDraw"
-              component={AppDraw}
-              options={{
-                headerShown: false,
-              }}
-            />
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
+      {!auth.userToken || Object.keys(auth.userToken).length === 0 ? (
+        <Login />
+      ) : (
+        <AppDraw />
+      )}
     </AuthContext.Provider>
   );
-};
+}
 
 const mapStateToProps = (state) => {
   return {
     dataToken: state.dataToken,
-    studentProfile: state.studentProfile
+    studentProfile: state.studentProfile,
   };
 };
 
@@ -130,12 +112,12 @@ const mapDispatchToProps = (dispatch, props) => {
       dispatch(actPostAccountRequest(account, dp));
     },
     deleteToken: () => {
-      dispatch(actDeleteToken())
+      dispatch(actDeleteToken());
     },
     fetchStudentProfile: (dataToken) => {
       dispatch(actFetchStudentProfileRequest(dataToken));
-    }
-  }
+    },
+  };
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(AppNavigator);

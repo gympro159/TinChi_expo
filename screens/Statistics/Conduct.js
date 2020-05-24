@@ -77,6 +77,18 @@ const Conduct = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "bold",
+            color: "#004275",
+            marginHorizontal: 10,
+          }}
+        >
+         KẾT QUẢ ĐÁNH GIÁ RÈN LUYỆN
+        </Text>
+      </View>
       <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
         <Row
           data={tableTitle}

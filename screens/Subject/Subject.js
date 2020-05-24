@@ -124,10 +124,10 @@ export default Subject = ({ navigation, route }) => {
                 ]}
               />
             </TableWrapper>
-            <FlatList
-              data={courses}
-              renderItem={({ item, index }) => (
+            {courses.map((item, index) => {
+              return (
                 <ListStudyTimes
+                  key={index}
                   course={item}
                   index={index}
                   lengthList={courses.length}
@@ -142,9 +142,8 @@ export default Subject = ({ navigation, route }) => {
                     });
                   }}
                 />
-              )}
-              keyExtractor={(item) => `${item.maLHP}`}
-            />
+              );
+            })}
           </>
         )}
         <Text style={styles.title}>
