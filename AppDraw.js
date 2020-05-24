@@ -14,14 +14,8 @@ import { Badge } from "react-native-elements";
 import { FontAwesome } from "@expo/vector-icons";
 import { connect } from "react-redux";
 import { AuthContext } from "./AppNavigator";
-
-const MyTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: "#fff",
-  },
-};
+import { SafeAreaProvider } from "react-native-safe-area-context";
+// import AnimatedTabBar, { TabsConfigsType } from 'curved-bottom-navigation-bar';
 
 //Account
 import UserProfileStackScreen from "./screens/Account/UserProfile";
@@ -56,6 +50,23 @@ import {
 } from "@react-navigation/drawer";
 
 const { width, height } = Dimensions.get("window");
+
+// const tabs: TabsConfigsType = {
+//   Home: {
+//       icon: ({ progress }) => /* ICON COMPONENT */
+//   },
+//   Profile: {
+//       icon: ({ progress }) => /* ICON COMPONENT */
+//   },
+// }
+
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "#fff",
+  },
+};
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -66,9 +77,9 @@ const AccountTabScreen = () => {
         tabBarIcon: ({ focused, color }) => {
           let iconName;
           color = focused ? "blue" : "gray";
-          if (route.name === "Lý lịch cá nhân") {
+          if (route.name === "userProfiles") {
             iconName = "user";
-          } else if (route.name === "Đổi mật khẩu") {
+          } else if (route.name === "changePassword") {
             iconName = "key";
           }
           return <FontAwesome name={iconName} size={24} color={color} />;
@@ -79,8 +90,16 @@ const AccountTabScreen = () => {
         inactiveTintColor: "gray",
       }}
     >
-      <Tab.Screen name="Lý lịch cá nhân" component={UserProfileStackScreen} />
-      <Tab.Screen name="Đổi mật khẩu" component={ChangePasswordStackScreen} />
+      <Tab.Screen
+        name="userProfiles"
+        component={UserProfileStackScreen}
+        options={{ title: "Lý lịch cá nhân" }}
+      />
+      <Tab.Screen
+        name="changePassword"
+        component={ChangePasswordStackScreen}
+        options={{ title: "Đổi mật khẩu" }}
+      />
     </Tab.Navigator>
   );
 };
@@ -92,14 +111,14 @@ const GeneralFunctionsTabScreen = () => {
         tabBarIcon: ({ focused, color }) => {
           let iconName;
           color = focused ? "blue" : "gray";
-          if (route.name === "Tin Tức - T.Báo") {
+          if (route.name === "news") {
             iconName = "newspaper-o";
-          } else if (route.name === "Thời khóa biểu") {
+          } else if (route.name === "timeTable") {
             iconName = "calendar";
-          } else if (route.name === "Tin nhắn") {
+          } else if (route.name === "message") {
             iconName = "envelope";
           }
-          return route.name === "Tin nhắn" ? (
+          return route.name === "message" ? (
             <View>
               <FontAwesome
                 style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
@@ -123,9 +142,21 @@ const GeneralFunctionsTabScreen = () => {
         inactiveTintColor: "gray",
       }}
     >
-      <Tab.Screen name="Tin Tức - T.Báo" component={NewsStackScreen} />
-      <Tab.Screen name="Thời khóa biểu" component={TimeTableStackScreen} />
-      <Tab.Screen name="Tin nhắn" component={MessageStackScreen} />
+      <Tab.Screen
+        name="news"
+        component={NewsStackScreen}
+        options={{ title: "Tin Tức - T.Báo" }}
+      />
+      <Tab.Screen
+        name="timeTable"
+        component={TimeTableStackScreen}
+        options={{ title: "Thời khóa biểu" }}
+      />
+      <Tab.Screen
+        name="message"
+        component={MessageStackScreen}
+        options={{ title: "Tin nhắn" }}
+      />
     </Tab.Navigator>
   );
 };
@@ -137,11 +168,11 @@ const StatisticsTabScreen = () => {
         tabBarIcon: ({ focused, color }) => {
           let iconName;
           color = focused ? "blue" : "gray";
-          if (route.name === "L.Sử Q.Trình học") {
+          if (route.name === "historyOfStudying") {
             iconName = "bookmark";
-          } else if (route.name === "Kết quả học tập") {
+          } else if (route.name === "studyResult") {
             iconName = "graduation-cap";
-          } else if (route.name === "Kết quả rèn luyện") {
+          } else if (route.name === "conduct") {
             iconName = "fire";
           }
           return <FontAwesome name={iconName} size={24} color={color} />;
@@ -153,11 +184,20 @@ const StatisticsTabScreen = () => {
       }}
     >
       <Tab.Screen
-        name="L.Sử Q.Trình học"
+        name="historyOfStudying"
         component={HistoryOfStudyingStackScreen}
+        options={{ title: "L.Sử Q.Trình học" }}
       />
-      <Tab.Screen name="Kết quả học tập" component={StudyResultStackScreen} />
-      <Tab.Screen name="Kết quả rèn luyện" component={ConductStackScreen} />
+      <Tab.Screen
+        name="studyResult"
+        component={StudyResultStackScreen}
+        options={{ title: "Kết quả học tập" }}
+      />
+      <Tab.Screen
+        name="conduct"
+        component={ConductStackScreen}
+        options={{ title: "Kết quả rèn luyện" }}
+      />
     </Tab.Navigator>
   );
 };
@@ -170,11 +210,11 @@ const StudyingTabScreen = () => {
           let iconName;
           color = focused ? "blue" : "gray";
 
-          if (route.name === "Đăng ký học tập") {
+          if (route.name === "modules") {
             iconName = "pencil-square";
-          } else if (route.name === "Lớp H.Phần đã ĐK") {
+          } else if (route.name === "registeredCourses") {
             iconName = "flag";
-          } else if (route.name === "Lịch thi") {
+          } else if (route.name === "scheduleOfExam") {
             iconName = "bell";
           }
           return <FontAwesome name={iconName} size={24} color={color} />;
@@ -185,12 +225,21 @@ const StudyingTabScreen = () => {
         inactiveTintColor: "gray",
       }}
     >
-      <Tab.Screen name="Đăng ký học tập" component={ModulesStackScreen} />
       <Tab.Screen
-        name="Lớp H.Phần đã ĐK"
-        component={RegisteredCoursesStackScreen}
+        name="modules"
+        component={ModulesStackScreen}
+        options={{ title: "Đăng ký học tập" }}
       />
-      <Tab.Screen name="Lịch thi" component={ScheduleOfExamStackScreen} />
+      <Tab.Screen
+        name="registeredCourses"
+        component={RegisteredCoursesStackScreen}
+        options={{ title: "Lớp H.Phần đã ĐK" }}
+      />
+      <Tab.Screen
+        name="scheduleOfExam"
+        component={ScheduleOfExamStackScreen}
+        options={{ title: "Lịch thi" }}
+      />
     </Tab.Navigator>
   );
 };
@@ -202,9 +251,9 @@ const TuitionTabScreen = () => {
         tabBarIcon: ({ focused, color }) => {
           let iconName;
           color = focused ? "blue" : "gray";
-          if (route.name === "Nộp học phí trực tuyến") {
+          if (route.name === "payment") {
             iconName = "usd";
-          } else if (route.name === "Lịch sử nộp học phí") {
+          } else if (route.name === "historyTuition") {
             iconName = "filter";
           }
           return <FontAwesome name={iconName} size={24} color={color} />;
@@ -216,12 +265,14 @@ const TuitionTabScreen = () => {
       }}
     >
       <Tab.Screen
-        name="Lịch sử nộp học phí"
+        name="historyTuition"
         component={HistoryTuitionStackScreen}
+        options={{ title: "Lịch sử nộp học phí" }}
       />
       <Tab.Screen
-        name="Nộp học phí trực tuyến"
+        name="payment"
         component={PaymentStackScreen}
+        options={{ title: "Nộp học phí trực tuyến" }}
       />
     </Tab.Navigator>
   );
@@ -335,69 +386,74 @@ const AppDraw = ({ studentProfile, avatar }) => {
   var name = studentProfile.HoVaTen,
     avatar;
   return (
-    <NavigationContainer theme={MyTheme}>
-      <Drawer.Navigator
-        screenOptions={({ route }) => ({
-          drawerIcon: ({ focused, color }) => {
-            let iconName;
-            color = focused ? "blue" : "black";
+    <SafeAreaProvider>
+      <NavigationContainer theme={MyTheme}>
+        <Drawer.Navigator
+          screenOptions={({ route }) => ({
+            drawerIcon: ({ focused, color }) => {
+              let iconName;
+              color = focused ? "blue" : "black";
 
-            if (route.name === "Các chức năng chung") {
-              iconName = "home";
-            } else if (route.name === "Tài khoản") {
-              iconName = "vcard";
-            } else if (route.name === "Kế hoạch học tập") {
-              iconName = "book";
-            } else if (route.name === "Số liệu - Tổng hợp") {
-              iconName = "bar-chart";
-            } else if (route.name === "Học phí- Lệ phí") {
-              iconName = "money";
-            }
-            return route.name === "Các chức năng chung" ? (
-              <View>
+              if (route.name === "Các chức năng chung") {
+                iconName = "home";
+              } else if (route.name === "Tài khoản") {
+                iconName = "vcard";
+              } else if (route.name === "Kế hoạch học tập") {
+                iconName = "book";
+              } else if (route.name === "Số liệu - Tổng hợp") {
+                iconName = "bar-chart";
+              } else if (route.name === "Học phí- Lệ phí") {
+                iconName = "money";
+              }
+              return route.name === "Các chức năng chung" ? (
+                <View>
+                  <FontAwesome
+                    style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
+                    name={iconName}
+                    size={30}
+                    color={color}
+                  />
+                  <Badge
+                    value="1"
+                    status="error"
+                    containerStyle={{ position: "absolute", top: -4, left: 30 }}
+                  />
+                </View>
+              ) : (
                 <FontAwesome
                   style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
                   name={iconName}
                   size={30}
                   color={color}
                 />
-                <Badge
-                  value="1"
-                  status="error"
-                  containerStyle={{ position: "absolute", top: -4, left: 30 }}
-                />
-              </View>
-            ) : (
-              <FontAwesome
-                style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
-                name={iconName}
-                size={30}
-                color={color}
-              />
-            );
-          },
-        })}
-        drawerContentOptions={{
-          activeTintColor: "blue",
-          inactiveTintColor: "black",
-        }}
-        drawerContent={(props) => (
-          <DrawerContent {...props} name={name} avatar={avatar} />
-        )}
-      >
-        <Drawer.Screen
-          name="Các chức năng chung"
-          component={GeneralFunctionsTabScreen}
-        />
-        <Drawer.Screen name="Tài khoản" component={AccountTabScreen} />
-        <Drawer.Screen name="Kế hoạch học tập" component={StudyingTabScreen} />
-        <Drawer.Screen
-          name="Số liệu - Tổng hợp"
-          component={StatisticsTabScreen}
-        />
-        <Drawer.Screen name="Học phí- Lệ phí" component={TuitionTabScreen} />
-      </Drawer.Navigator>
-    </NavigationContainer>
+              );
+            },
+          })}
+          drawerContentOptions={{
+            activeTintColor: "blue",
+            inactiveTintColor: "black",
+          }}
+          drawerContent={(props) => (
+            <DrawerContent {...props} name={name} avatar={avatar} />
+          )}
+        >
+          <Drawer.Screen
+            name="Các chức năng chung"
+            component={GeneralFunctionsTabScreen}
+          />
+          <Drawer.Screen name="Tài khoản" component={AccountTabScreen} />
+          <Drawer.Screen
+            name="Kế hoạch học tập"
+            component={StudyingTabScreen}
+          />
+          <Drawer.Screen
+            name="Số liệu - Tổng hợp"
+            component={StatisticsTabScreen}
+          />
+          <Drawer.Screen name="Học phí- Lệ phí" component={TuitionTabScreen} />
+        </Drawer.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 };
 

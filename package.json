@@ -18,6 +18,7 @@
     "@react-navigation/stack": "^5.1.1",
     "accordion-collapse-react-native": "^0.2.8",
     "axios": "^0.19.2",
+    "curved-bottom-navigation-bar": "^1.0.5",
     "expo": "~36.0.0",
     "intl": "^1.2.5",
     "lodash": "^4.17.15",
