@@ -10,250 +10,188 @@ import {
   Modal,
 } from "react-native";
 import { Button, Text } from "react-native-elements";
-import {
-  Table,
-  TableWrapper,
-  Row,
-  Rows,
-  Col,
-} from "react-native-table-component";
+import { Table, Row } from "react-native-table-component";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
+import Spinner from "react-native-loading-spinner-overlay";
 import axios from "axios";
 
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
-const HistoryTuition = () => {
+const HistoryTuition = ({ navigation }) => {
   const [listHistoryTuition, setListHistoryTuition] = useState([]);
-  const [modalContent, setModalContent] = useState({});
-  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     axios
       .get(`https://5ebb82caf2cfeb001697cd36.mockapi.io/school/historyTuition`)
       .then((res) => {
-        setListHistoryTuition(res.data);
+        setListHistoryTuition(res.data.reverse());
+        setLoading(false);
       });
   }, []);
 
-  const openModalButton = (historyTuition) => {
-    return (
-      <View style={{ alignItems: "center" }}>
-        <TouchableOpacity
-          onPress={() => {
-            setModalContent(historyTuition);
-            setModalVisible(true);
-          }}
-        >
-          <FontAwesome name="list-ul" size={17} color="blue" />
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  return (
+  return loading ? (
+    <Spinner
+      visible={loading}
+      textContent={"Đang tải..."}
+      textStyle={{ color: "#fff" }}
+    />
+  ) : (
     <View style={styles.container}>
-      <Modal animationType="slide" transparent={true} visible={modalVisible}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                borderBottomWidth: 0.5,
-                width: WIDTH * 0.9,
-                alignItems: "center",
-                paddingHorizontal: 10,
-                marginBottom: 10
-              }}
-            >
-              <Text
+      <FlatList
+        data={listHistoryTuition}
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 10,
+              paddingVertical: 20,
+              borderRadius: 16,
+              backgroundColor: "#fff",
+              margin: 5,
+              height: 100,
+              zIndex: 5,
+              elevation: 5,
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+            }}
+            onPress={() =>
+              navigation.navigate("HistoryTuitionDetail", {
+                bill: item,
+              })
+            }
+          >
+            <View>
+              <View
                 style={{
-                  fontSize: 20,
-                  fontWeight: "bold",
-                  color: "#004275",
-                  marginHorizontal: 10,
+                  backgroundColor: "#D3E3F2",
+                  height: 40,
+                  width: 40,
+                  borderRadius: 40,
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                BIÊN LAI
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    color: "#3076F1",
+                  }}
+                >
+                  {listHistoryTuition.length - index}
+                </Text>
+              </View>
+            </View>
+            <View style={{ width: WIDTH * 0.7 }}>
+              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                {item.hocKy}
               </Text>
-              <TouchableOpacity
-                style={styles.closeModalButton}
-                onPress={() => {
-                  setModalVisible(!modalVisible);
-                }}
-              >
-                <Text style={{ fontSize: 25, color: "#777" }}>×</Text>
-              </TouchableOpacity>
+              <Text style={{ fontSize: 14, color: "#808080" }}>
+                Số tiền: <Text style={{ color: "#000" }}>{item.soTien}</Text>
+              </Text>
             </View>
-            <ScrollView style={{ marginBottom: 5 }}>
-              <View style={styles.content}>
-                <Text style={styles.label}>Số biên lai: </Text>
-                <Text style={styles.input}>{modalContent.soBienLai}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Ký hiệu: </Text>
-                <Text style={styles.input}>{modalContent.kyHieu}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Họ và tên: </Text>
-                <Text style={styles.input}>{modalContent.hoTen}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Mã SV: </Text>
-                <Text style={styles.input}>{modalContent.maSV}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Ngày lập biên lai: </Text>
-                <Text style={styles.input}>{modalContent.ngayLap}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Học kỳ: </Text>
-                <Text style={styles.input}>{modalContent.hocKy}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Nội dung: </Text>
-                <Text style={styles.input}>{modalContent.noiDung}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Số tiền: </Text>
-                <Text style={styles.input}>{modalContent.soTien}</Text>
-              </View>
-              <View style={styles.content}>
-                <Text style={styles.label}>Hình thức thu: </Text>
-                <Text style={styles.input}>{modalContent.hinhThucThu}</Text>
-              </View>
-              <Table
-                borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}
-                style={{ paddingRight: 3 }}
-              >
-                <Row
-                  data={["STT", "Tên lớp học phần", "Số tiền"]}
-                  style={{ backgroundColor: "#d2d2d2" }}
-                  textStyle={{ textAlign: "center" }}
-                  widthArr={[32, undefined, 75]}
-                />
-                {modalContent.danhSach && modalContent.danhSach.map((item, index) => {
-                  return (
-                    <Row
-                      key={index}
-                      data={[`${item.STT}`, `${item.tenLHP}`, `${item.soTien}`]}
-                      style={
-                        index % 2
-                          ? { backgroundColor: "#f9f9f9" }
-                          : { backgroundColor: "#fff" }
-                      }
-                      textStyle={{ textAlign: "center" }}
-                      widthArr={[32, undefined, 75]}
-                    />
-                  );
-                })}
-              </Table>
-            </ScrollView>
-            <View
-              style={{
-                width: WIDTH * 0.9,
-                paddingTop: 10,
-                marginTop: 10,
-                alignItems: "flex-end",
-                paddingHorizontal: 15,
-                marginBottom: 10,
-                borderTopWidth: 0.5,
-              }}
-            >
-              <Button
-                title="Đóng"
-                buttonStyle={{
-                  backgroundColor: "#6c757d",
-                  borderRadius: 6,
-                  height: 30,
-                  width: 55,
-                }}
-                titleStyle={{ color: "#fff", fontSize: 14 }}
-                onPress={() => {
-                  setModalVisible(!modalVisible);
-                }}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+          </TouchableOpacity>
+        )}
+        keyExtractor={(item) => `${item.soBienLai}`}
+      />
+    </View>
+  );
+};
 
-      <View
-        style={{
-          borderBottomWidth: 0.5,
-          width: WIDTH,
-          marginVertical: 10,
-          marginBottom: 20,
-        }}
-      >
+const HistoryTuitionDetail = ({ route }) => {
+  var { bill } = route.params;
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView>
         <Text
           style={{
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: "bold",
-            color: "#004275",
-            marginHorizontal: 10,
+            textAlign: "center",
+            marginVertical: 20,
           }}
         >
-          BIÊN LAI NỘP HỌC PHÍ
+          {bill.hocKy}
         </Text>
-      </View>
-      <Table
-        borderStyle={{
-          borderColor: "#dbdbdb",
-          borderWidth: 1,
-        }}
-      >
-        <Row
-          data={["Năm học/học kỳ", "Thời điểm lập", "Số tiền", ""]}
-          style={styles.titleTable}
-          textStyle={styles.tableText}
-          widthArr={[WIDTH * 0.35, WIDTH * 0.3, WIDTH * 0.26, WIDTH * 0.09]}
-        />
-      </Table>
-      <ScrollView style={{}}>
-        <Table
-          borderStyle={{
-            borderColor: "#dbdbdb",
-            borderWidth: 1,
+        <View
+          style={{
+            flexDirection: "row",
+            borderBottomColor: "#dbdbdb",
+            borderBottomWidth: 0.5,
+            marginBottom: 5,
+            justifyContent: "space-between",
+            marginRight: 20,
           }}
         >
-          {listHistoryTuition.map((historyTuition, index) => {
+          <View style={{ flexDirection: "row" }}>
+            <Text style={styles.label}>Số biên lai: </Text>
+            <Text style={{ fontWeight: "bold", fontSize: 13, marginLeft: 5 }}>
+              {bill.soBienLai}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <Text style={styles.label}>Ký hiệu: </Text>
+            <Text style={{ fontWeight: "bold", fontSize: 13, marginLeft: 5 }}>
+              {bill.kyHieu}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.label}>Họ và tên: </Text>
+          <Text style={styles.input}>{bill.hoTen}</Text>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.label}>Mã sinh viên: </Text>
+          <Text style={styles.input}>{bill.maSV}</Text>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.label}>Ngày lập: </Text>
+          <Text style={styles.input}>{bill.ngayLap}</Text>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.label}>Nội dung: </Text>
+          <Text style={styles.input}>{bill.noiDung}</Text>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.label}>Số tiền: </Text>
+          <Text style={styles.input}>{bill.soTien}</Text>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.label}>Hình thức thu: </Text>
+          <Text style={styles.input}>{bill.hinhThucThu}</Text>
+        </View>
+
+        <Table>
+          <Row
+            data={["STT", "Môn", "Thành tiền"]}
+            style={styles.titleTable}
+            textStyle={styles.titleTableSchoolText}
+            widthArr={[WIDTH * 0.1, WIDTH * 0.6, WIDTH * 0.3]}
+          />
+          {bill.danhSach.map((row, index) => {
+            let rowArr = Object.values(row),
+              rm = rowArr.splice(1, 1);
             return (
               <Row
                 key={index}
-                data={[
-                  `${historyTuition.hocKy}`,
-                  `${historyTuition.ngayLap}`,
-                  `${historyTuition.soTien}`,
-                  openModalButton(historyTuition),
-                ]}
+                data={rowArr}
                 style={index % 2 ? styles.contentTable2 : styles.contentTable}
-                textStyle={styles.tableText}
-                widthArr={[
-                  WIDTH * 0.35,
-                  WIDTH * 0.3,
-                  WIDTH * 0.26,
-                  WIDTH * 0.09,
-                ]}
+                textStyle={styles.contentTableSchoolText}
+                widthArr={[WIDTH * 0.1, WIDTH * 0.6, WIDTH * 0.3]}
               />
             );
           })}
         </Table>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            paddingHorizontal: 10,
-            paddingVertical: 7,
-            backgroundColor: "#f2f2f2",
-          }}
-        >
-          <Text style={{ fontWeight: "bold" }}>Tổng học phí đã nộp:</Text>
-          <Text style={{ fontWeight: "bold" }}>4,770,000 đồng</Text>
-        </View>
       </ScrollView>
     </View>
   );
@@ -280,72 +218,54 @@ export default HistoryTuitionStackScreen = ({ navigation }) => {
           ),
         }}
       />
+      <Stack.Screen
+        name="HistoryTuitionDetail"
+        component={HistoryTuitionDetail}
+        options={{
+          headerTitleAlign: "center",
+          title: "Chi tiết hóa đơn",
+        }}
+      />
     </Stack.Navigator>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  content: {
+    flexDirection: "row",
+    borderBottomColor: "#dbdbdb",
+    borderBottomWidth: 0.5,
+    marginBottom: 5,
+  },
+  label: {
+    fontSize: 13,
+    marginLeft: 20,
+  },
+  input: {
+    fontWeight: "bold",
+    paddingRight: 90,
+    fontSize: 13,
+    marginLeft: 5,
   },
   titleTable: {
-    backgroundColor: "#d2d2d2",
+    backgroundColor: "#d6e4fc",
     height: 40,
   },
   contentTable: {
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "#eaf1fe",
     minHeight: 40,
   },
   contentTable2: {
     backgroundColor: "#fff",
     minHeight: 40,
   },
-  tableText: {
+  titleTableSchoolText: {
     textAlign: "center",
-  },
-  modalContainer: {
-    flex: 1,
-    marginTop: 22,
-  },
-  modalView: {
-    width: WIDTH * 0.9,
-    height: HEIGHT * 0.9,
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 6,
-    paddingTop: 5,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  closeModalButton: {},
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  content: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderBottomColor: "#dbdbdb",
-    width: WIDTH * 0.9,
-    borderBottomWidth: 0.5,
-    marginBottom: 5,
-  },
-  label: {
+    fontSize: 14,
     fontWeight: "bold",
-    fontSize: 17,
-    marginLeft: 10,
-    width: 150,
   },
-  input: {
-    fontSize: 17,
-    marginLeft: 10,
-    paddingRight: 180,
+  contentTableSchoolText: {
+    textAlign: "center",
+    fontSize: 14,
   },
 });

@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Dimensions,
+  FlatList,
+} from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
@@ -14,14 +21,6 @@ import {
 const WIDTH = Dimensions.get("window").width;
 
 const Conduct = ({ navigation }) => {
-  const tableTitle = [
-    "Học kỳ, Năm học",
-    "Lớp sinh hoạt",
-    "Giáo viên CVHT",
-    "Điểm RL",
-    "Xếp loại",
-  ];
-
   const [listConduct, setListConduct] = useState([
     {
       namHoc: "2016-2017",
@@ -57,67 +56,81 @@ const Conduct = ({ navigation }) => {
     },
   ]);
 
-  const handleListConduct = () => {
-    var result = [];
-    listConduct.forEach((ASemester) => {
-      let row = [
-        `Học kỳ ${ASemester.hocKy}, năm học ${ASemester.namHoc}`,
-        `${ASemester.lopSinhHoat}`,
-        `${ASemester.giaoVien}`,
-        `${ASemester.dỉemRL}`,
-        `${ASemester.xl}`,
-      ];
-      result.push(row);
-    });
-    return result;
-  };
-
-  const [tableContent, setTableContent] = useState(() => handleListConduct())
-  //const tableContent = () => handleListConduct();
-
   return (
     <View style={styles.container}>
-      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}>
+      <View
+        style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}
+      >
         <Text
           style={{
             fontSize: 20,
             fontWeight: "bold",
-            color: "#004275",
+            color: "#3076F1",
             marginHorizontal: 10,
           }}
         >
-         KẾT QUẢ ĐÁNH GIÁ RÈN LUYỆN
+          Kết quả đánh giá rèn luyện
         </Text>
       </View>
-      <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
-        <Row
-          data={tableTitle}
-          style={styles.head}
-          textStyle={styles.text}
-          widthArr={[
-            WIDTH * 0.23,
-            WIDTH * 0.29,
-            WIDTH * 0.2,
-            WIDTH * 0.15,
-            WIDTH * 0.13
-          ]}
-        />
-      </Table>
-      <ScrollView>
-        <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
-          <Rows
-            data={tableContent}
-            textStyle={styles.text}
-            widthArr={[
-              WIDTH * 0.23,
-              WIDTH * 0.29,
-              WIDTH * 0.2,
-              WIDTH * 0.15,
-              WIDTH * 0.13,
-            ]}
-          />
-        </Table>
-      </ScrollView>
+      <FlatList
+        data={listConduct}
+        renderItem={({ item, index }) => (
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 10,
+              paddingVertical: 20,
+              borderRadius: 16,
+              backgroundColor: "#fff",
+              margin: 5,
+              zIndex: 5,
+              elevation: 5,
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+            }}
+          >
+            <View style={{ width: WIDTH * 0.7 }}>
+              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                Học kỳ {item.hocKy} - {item.namHoc}
+              </Text>
+              <Text style={{ fontSize: 14, color: "#808080" }}>
+                Giáo viên CVHT/CN: {item.giaoVien}
+              </Text>
+              <Text style={{ fontSize: 14, color: "#808080" }}>
+                Điểm rèn luyện: {item.dỉemRL}
+              </Text>
+            </View>
+            <View
+              style={{
+                backgroundColor: "#D3E3F2",
+                height: 40,
+                width: 80,
+                borderRadius: 40,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  color: "#3076F1",
+                }}
+              >
+                {item.xl}
+              </Text>
+            </View>
+          </View>
+        )}
+        keyExtractor={(item) => `${item.hocKy}-${item.namHoc}`}
+      />
     </View>
   );
 };
@@ -158,6 +171,6 @@ const styles = StyleSheet.create({
   },
   text: {
     margin: 6,
-    textAlign: "center"
+    textAlign: "center",
   },
 });

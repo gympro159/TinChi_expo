@@ -31,11 +31,11 @@ const UserProfile = ({ navigation, studentProfile }) => {
           style={{
             fontSize: 20,
             fontWeight: "bold",
-            color: "#004275",
+            color: "#3076F1",
             marginHorizontal: 10,
           }}
         >
-          LÝ LỊCH CÁ NHÂN
+          Lý lịch cá nhân
         </Text>
         <TouchableOpacity
           onPress={() => {
@@ -45,7 +45,7 @@ const UserProfile = ({ navigation, studentProfile }) => {
           }}
           style={{ marginTop: -2, marginRight: 20 }}
         >
-          <FontAwesome name="pencil-square" color="#004275" size={30} />
+          <FontAwesome name="pencil-square" color="#3076F1" size={30} />
         </TouchableOpacity>
       </View>
       <ScrollView>
@@ -257,11 +257,11 @@ const EditProfile = ({ route }) => {
           style={{
             fontSize: 20,
             fontWeight: "bold",
-            color: "#004275",
+            color: "#3076F1",
             marginHorizontal: 10,
           }}
         >
-          THAY ĐỔI LÝ LỊCH
+          Thay đổi lý lịch
         </Text>
         <TouchableOpacity style={{ marginTop: -2, marginRight: 20 }}>
           <FontAwesome name="save" color="green" size={30} />
@@ -1236,7 +1236,8 @@ const EditProfile = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginVertical: 10,
+    paddingVertical: 10,
+    backgroundColor: "#fff"
   },
   content: {
     flexDirection: "row",

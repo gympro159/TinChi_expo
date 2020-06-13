@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { Input, Button, Text } from "react-native-elements";
+// import Loader from 'react-native-modal-loader';
 import { AuthContext } from "./../../AppNavigator";
 
 const { width, height } = Dimensions.get("window");
@@ -21,6 +22,7 @@ export default Login = () => {
 
   return (
     <View>
+      {/* <Loader loading={loading} color="#000"/> */}
       <ImageBackground
         style={{ width, height: height * 1.1 }}
         source={require("./../../assets/bg-avatar.jpg")}

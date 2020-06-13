@@ -12,7 +12,7 @@ export default ListNews = (props) => {
           <MaterialCommunityIcons
             name="hand-pointing-right"
             size={20}
-            color="#337ab7"
+            color="#3076F1"
           ></MaterialCommunityIcons>
           <Text style={styles.titleContent}> {news.title}</Text>
         </View>
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     // textTransform: "uppercase",
     //marginBottom: 8,
     fontWeight: "700",
-    color: "#337ab7"
+    color: "#3076F1"
   },
   date: {
     fontSize: 13,

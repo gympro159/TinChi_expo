@@ -1,42 +1,34 @@
 import React, { useState, useEffect } from "react";
+import { connect } from "react-redux";
 import {
   View,
-  Text,
   Button,
   StyleSheet,
   Dimensions,
   FlatList,
+  Text,
+  Picker,
+  TouchableOpacity,
 } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { FontAwesome } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { DrawerActions } from "@react-navigation/native";
-import CourseStackScreen from "./../Course/Course";
+import Spinner from "react-native-loading-spinner-overlay";
 import Subject from "./../Subject/Subject";
+import Course from "./../Course/Course";
+import Compose from "./../GeneralFunctions/Compose";
 import axios from "axios";
-import {
-  Table,
-  TableWrapper,
-  Row,
-  Rows,
-  Col,
-  Cell,
-} from "react-native-table-component";
 import ListSemester from "../../components/ListSemesterHistory/ListSemesterHistory";
 
 const WIDTH = Dimensions.get("window").width;
 
-const HistoryOfStudying = ({ navigation }) => {
-  const [titleTable, setTitleTable] = useState([
-    "Mã HP",
-    "Lớp Học phần",
-    "Điểm thi",
-    "Tổng điểm",
-  ]);
-
+const HistoryOfStudying = ({ navigation, studentProfile }) => {
   const [contentTable, setContentTable] = useState([]);
-
   const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [hocKy, setHocKy] = useState("Học kỳ 2 - 2016-2017");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -57,10 +49,13 @@ const HistoryOfStudying = ({ navigation }) => {
               maHP: course.maHP,
               maLHP: course.maLHP,
               lopHP: course.tenLHP,
+              diemQTHT: course.diemQTHT,
               diemThi:
                 course.diemThi2 === null ? course.diemThi1 : course.diemThi2,
               tongDiem:
                 course.tongDiem2 === null ? course.tongDiem1 : course.tongDiem2,
+              diemHe4: course.diemHe4,
+              diemChu: course.diemChu,
             });
             check = 1;
           }
@@ -74,86 +69,237 @@ const HistoryOfStudying = ({ navigation }) => {
                 maHP: course.maHP,
                 maLHP: course.maLHP,
                 lopHP: course.tenLHP,
+                diemQTHT: course.diemQTHT,
                 diemThi:
                   course.diemThi2 === null ? course.diemThi1 : course.diemThi2,
                 tongDiem:
                   course.tongDiem2 === null
                     ? course.tongDiem1
                     : course.tongDiem2,
+                diemHe4: course.diemHe4,
+                diemChu: course.diemChu,
               },
             ],
           });
         }
       });
       setContentTable(tableContentTemp);
+      setLoading(false);
     });
   }, []);
-  return (
-    <View>
-      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}>
+
+  return loading ? (
+    <Spinner
+      visible={loading}
+      textContent={"Đang tải..."}
+      textStyle={{ color: "#fff" }}
+    />
+  ) : (
+    <>
+      <LinearGradient
+        colors={["#65A5F6", "#3076F1"]}
+        start={[0, 0.5]}
+        end={[1, 0.5]}
+        style={{
+          padding: 15,
+          alignItems: "center",
+          borderRadius: 16,
+          margin: 10,
+        }}
+      >
         <Text
           style={{
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: "bold",
-            color: "#004275",
-            marginHorizontal: 10,
+            color: "#fff",
           }}
         >
-         LỊCH SỬ QUÁ TRÌNH HỌC TẬP
+          {studentProfile.HoVaTen}
         </Text>
-      </View>
-      <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
-        <Row
-          data={titleTable}
-          style={styles.titleTable}
-          textStyle={styles.titleTableText}
-          widthArr={[WIDTH * 0.22, WIDTH * 0.52, WIDTH * 0.13, WIDTH * 0.13]}
-        />
-      </Table>
+        <Text
+          style={{
+            fontSize: 16,
+            color: "#fff",
+          }}
+        >
+          {studentProfile.MaSinhVien}
+        </Text>
+        <View
+          style={{
+            borderWidth: 1,
+            borderRadius: 6,
+            borderColor: "#dbdbdb",
+            backgroundColor: "#fff",
+            marginHorizontal: 10,
+            marginBottom: 0,
+            marginTop: 10,
+          }}
+        >
+          <Picker
+            selectedValue={hocKy}
+            style={{ height: 40, width: 250 }}
+            onValueChange={(value) => setHocKy(value)}
+            mode="dropdown"
+          >
+            <Picker.Item
+              label="Học kỳ 2 - 2016-2017"
+              value={"Học kỳ 2 - 2016-2017"}
+            />
+            <Picker.Item
+              label="Học kỳ 1 - 2016-2017"
+              value={"Học kỳ 1 - 2016-2017"}
+            />
+          </Picker>
+        </View>
 
-      <FlatList
-        data={contentTable}
-        renderItem={({ item, index }) => (
-          <ListSemester
-            semesterContent={item}
-            index={index}
-            lengthList={contentTable.length}
-            onPressCourse={(index) => {
-              let courseParam = {},
-                subjectParam = {};
-              for (let course of courses) {
-                if (course.maLHP === item.course[index].maLHP) {
-                  courseParam = { ...course };
-                  break;
-                }
-              }
-              for (let subject of subjects) {
-                if (subject.maHP === item.course[index].maHP) {
-                  subjectParam = { ...subject };
-                  break;
-                }
-              }
-              navigation.navigate("CourseStackScreen", {
-                course: courseParam,
-                screen: "Course",
-                params: {
-                  course: courseParam,
-                  subject: subjectParam,
-                },
-              });
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            marginTop: 10,
+          }}
+        >
+          <View
+            style={{
+              borderRightWidth: 0.5,
+              borderColor: "#FFF",
+              alignItems: "center",
+              paddingRight: 20,
             }}
-            onPressSubject={(index) => {
-              navigation.navigate("Subject", {
-                maHP: item.course[index].maHP,
-              });
+          >
+            <Text style={{ fontSize: 18, color: "#fff" }}>16</Text>
+            <Text style={{ fontSize: 16, color: "#fff" }}>Tổng số tín chỉ</Text>
+          </View>
+          <View
+            style={{
+              borderLeftWidth: 0.5,
+              borderColor: "#FFF",
+              alignItems: "center",
+              paddingLeft: 20,
             }}
-          />
-        )}
-        keyExtractor={(item) => `${item.year}-${item.semester}`}
-      />
-    </View>
+          >
+            <Text style={{ fontSize: 18, color: "#fff" }}>9.2 / 3.8</Text>
+            <Text style={{ fontSize: 16, color: "#fff" }}>Điểm trung bình</Text>
+          </View>
+        </View>
+      </LinearGradient>
+
+      {contentTable.map((semesterContent, index) => {
+        return (
+          `Học kỳ ${semesterContent.semester} - ${semesterContent.year}` ===
+            hocKy && (
+            <FlatList
+              key={index}
+              data={semesterContent.course}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingHorizontal: 10,
+                    paddingVertical: 20,
+                    borderRadius: 16,
+                    backgroundColor: "#fff",
+                    margin: 5,
+                    zIndex: 5,
+                    elevation: 5,
+                    shadowColor: "#000",
+                    shadowOffset: {
+                      width: 0,
+                      height: 2,
+                    },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                  }}
+                >
+                  <View style={{ width: WIDTH * 0.7 }}>
+                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                      {item.lopHP}
+                    </Text>
+                    <Text style={{ fontSize: 14, color: "#808080" }}>
+                      Điểm QTHT: {item.diemQTHT.toFixed(1)}
+                      {"   "} Điểm thi: {item.diemThi.toFixed(1)}
+                    </Text>
+                    <Text style={{ fontSize: 14, color: "#808080" }}>
+                      Điểm trung bình (Hệ 10): {item.tongDiem.toFixed(1)}
+                    </Text>
+                  </View>
+                  <View>
+                    <View
+                      style={{
+                        backgroundColor: "#D3E3F2",
+                        height: 40,
+                        width: 80,
+                        borderRadius: 40,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "bold",
+                          color: "#3076F1",
+                        }}
+                      >
+                        {item.diemChu}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={{ marginTop: 10 }}
+                      onPress={() => {
+                        let courseParam = {},
+                          subjectParam = {};
+                        for (let course of courses) {
+                          if (course.maLHP === item.maLHP) {
+                            courseParam = { ...course };
+                            break;
+                          }
+                        }
+                        for (let subject of subjects) {
+                          if (subject.maHP === item.maHP) {
+                            subjectParam = { ...subject };
+                            break;
+                          }
+                        }
+                        navigation.navigate("Course", {
+                          course: courseParam,
+                          subject: subjectParam,
+                        });
+                      }}
+                    >
+                      <Text style={{ color: "#3076F1" }}>
+                        Thông tin{" "}
+                        <FontAwesome
+                          name="chevron-right"
+                          size={15}
+                          color="#3076F1"
+                        />
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+              keyExtractor={(item) => `${item.maLHP}`}
+            />
+          )
+        );
+      })}
+    </>
   );
 };
+
+const mapStateToProps = (state) => {
+  return {
+    studentProfile: state.studentProfile,
+  };
+};
+
+const HistoryOfStudyingConnect = connect(
+  mapStateToProps,
+  null
+)(HistoryOfStudying);
 
 const Stack = createStackNavigator();
 
@@ -162,12 +308,12 @@ export default HistoryOfStudyingStackScreen = ({ navigation }) => {
     <Stack.Navigator>
       <Stack.Screen
         name="HistoryOfStudying"
-        component={HistoryOfStudying}
+        component={HistoryOfStudyingConnect}
         options={{
           headerTitleAlign: "center",
           title: "Lịch sử quá trình học tập",
           headerLeft: () => (
-            <Icon
+            <FontAwesome
               onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
               style={{ marginLeft: 10 }}
               name="bars"
@@ -188,15 +334,24 @@ export default HistoryOfStudyingStackScreen = ({ navigation }) => {
         })}
       />
       <Stack.Screen
-        name="CourseStackScreen"
-        component={CourseStackScreen}
+        name="Course"
+        component={Course}
         options={({ route }) => ({
+          //headerShown: false,
           title: route.params.course.tenLHP,
           headerTitleAlign: "left",
           headerTitleStyle: {
             width: WIDTH - 100,
           },
         })}
+      />
+      <Stack.Screen
+        name="Compose"
+        component={Compose}
+        options={{
+          headerTitleAlign: "center",
+          title: "Soạn tin",
+        }}
       />
     </Stack.Navigator>
   );

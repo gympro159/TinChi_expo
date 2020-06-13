@@ -4,14 +4,18 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
-  TextInput,
+  TouchableOpacity,
+  ScrollView,
 } from "react-native";
+import { Text, Input, CheckBox, Button } from "react-native-elements";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { DrawerActions } from "@react-navigation/native";
-import { Text, ButtonGroup, CheckBox, Button } from "react-native-elements";
+import Spinner from "react-native-loading-spinner-overlay";
 import axios from "axios";
 import _ from "lodash";
+import { changeAlias, getLocalDateTimeFormat } from "./../../constants/common";
 
 //import components
 import ListMessages from "./../../components/ListMessages/ListMessages";
@@ -22,9 +26,11 @@ const { width, height } = Dimensions.get("window");
 const Message = ({ route }) => {
   var { message } = route.params;
   return (
-    <View style={{ padding: 10, paddingTop: 0 }}>
+    <ScrollView
+      style={{ padding: 10, paddingTop: 0, backgroundColor: "#FFF", flex: 1 }}
+    >
       <View style={{ borderBottomColor: "#000", borderBottomWidth: 1 }}>
-        <Text style={styles.titleHeader}>Tin nhắn đến</Text>
+        <Text style={styles.titleHeader}>Tin nhắn</Text>
       </View>
       <Text style={{ fontWeight: "bold", fontSize: 17 }}> {message.title}</Text>
       <View>
@@ -66,7 +72,7 @@ const Message = ({ route }) => {
       <View style={styles.contentMessage}>
         <Text>{message.content}</Text>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -80,8 +86,12 @@ const Inbox = ({ navigation }) => {
   const [messageInbox, setMessageInbox] = useState([]);
   const [messageSent, setMessageSent] = useState([]);
   const [messageDeleted, setMessageDeleted] = useState([]);
-  const [locationPage, setLocationPage] = useState(0);
-  const lengthPage = 2;
+  const [bold, setBold] = useState(true);
+  const [checkedAll, setCheckedAll] = useState(false);
+  const [checkList, setCheckList] = useState([]);
+  const [btnGroupPress, setBtnGroupPress] = useState([true, false, false]);
+  const [filterInput, setFilterInput] = useState("");
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     axios
       .get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/message`)
@@ -98,46 +108,119 @@ const Inbox = ({ navigation }) => {
             messageDeletedTemp.push(res.data[i]);
           }
         }
-        messageInboxTemp = _.chunk(messageInboxTemp, lengthPage);
-        messageSentTemp = _.chunk(messageSentTemp, lengthPage);
-        messageDeletedTemp = _.chunk(messageDeletedTemp, lengthPage);
         setMessageInbox(messageInboxTemp);
         setMessageSent(messageSentTemp);
         setMessageDeleted(messageDeletedTemp);
-        setMessagesRender(messageInboxTemp[locationPage]);
+        setMessagesRender(messageInboxTemp);
         let list = [];
         for (let i = 0; i < messageInboxTemp.length; i++) {
           list.push(false);
         }
         setCheckList(list);
+        setLoading(false);
       });
   }, []);
 
-  const [bold, setBold] = useState(true);
-
-  const [checkedAll, setCheckedAll] = useState(false);
-
-  const [checkList, setCheckList] = useState([]);
-
-  const [btnGroupPress, setBtnGroupPress] = useState([true, false, false]);
-  
-
-  
-
-  return (
-    <View style={{ flex: 1 }}>
-      <View style={{ flexDirection: "row", marginLeft: 1 }}>
-        <Button
-          title=""
-          icon={
-            <FontAwesome name="send" size={25} color="#337AB7" />
-          }
-          buttonStyle={styles.buttonStyle}
-          titleStyle={styles.buttonTitleStyle}
-          onPress={() => {
-            navigation.push("Compose");
-          }}
-        />
+  return loading ? (
+    <Spinner
+      visible={loading}
+      textContent={"Đang tải..."}
+      textStyle={{ color: "#fff" }}
+    />
+  ) : (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <TouchableOpacity
+        style={{
+          zIndex: 5,
+          elevation: 5,
+          backgroundColor: "#3076F1",
+          justifyContent: "center",
+          alignItems: "center",
+          width: 50,
+          height: 50,
+          borderRadius: 50,
+          position: "absolute",
+          right: 20,
+          bottom: 10,
+          shadowColor: "#000",
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+        }}
+        onPress={() => {
+          navigation.push("Compose");
+        }}
+      >
+        <FontAwesome name="pencil" size={30} color="#fff" />
+      </TouchableOpacity>
+      <View style={styles.containerGroupAction}>
+        <View style={styles.containerCheckboxAll}>
+          <CheckBox
+            center
+            checked={checkedAll}
+            onPress={() => {
+              setCheckedAll(!checkedAll);
+              let list = [];
+              for (let i = 0; i < messagesRender.length; i++) {
+                list.push(!checkedAll);
+              }
+              setCheckList(list);
+            }}
+          />
+        </View>
+        <View>
+          <Button
+            buttonStyle={styles.buttonDeleteStyle}
+            type="outline"
+            icon={<FontAwesome name="trash-o" size={24} color="red" />}
+          />
+        </View>
+        <View style={{ width: width * 0.9 }}>
+          <Input
+            onChangeText={setFilterInput}
+            value={filterInput}
+            inputContainerStyle={{
+              height: 50,
+              width: 250,
+              borderBottomWidth: 0,
+              borderBottomColor: "#fff",
+            }}
+            placeholder="Tìm kiếm..."
+            leftIcon={
+              <FontAwesome
+                name="search"
+                size={20}
+                color="#777"
+                style={{ marginRight: 10 }}
+              />
+            }
+            rightIcon={
+              <TouchableOpacity
+                onPress={() => {
+                  setFilterInput("");
+                }}
+              >
+                <FontAwesome
+                  name="close"
+                  size={20}
+                  color="#777"
+                  style={{ marginRight: 10 }}
+                />
+              </TouchableOpacity>
+            }
+          />
+        </View>
+      </View>
+      <View
+        style={{
+          flexDirection: "row",
+          marginLeft: 1,
+          justifyContent: "space-between",
+        }}
+      >
         <Button
           title="Tin nhắn đến"
           buttonStyle={
@@ -150,10 +233,9 @@ const Inbox = ({ navigation }) => {
           }
           onPress={() => {
             setBtnGroupPress([true, false, false]);
-            setLocationPage(0);
-            setMessagesRender(messageInbox[0]);
+            setMessagesRender(messageInbox);
             let list = [];
-            for (let i = 0; i < messagesRender.length; i++) {
+            for (let i = 0; i < messageInbox.length; i++) {
               list.push(false);
             }
             setCheckList(list);
@@ -171,10 +253,9 @@ const Inbox = ({ navigation }) => {
           }
           onPress={() => {
             setBtnGroupPress([false, true, false]);
-            setLocationPage(0);
-            setMessagesRender(messageSent[0]);
+            setMessagesRender(messageSent);
             let list = [];
-            for (let i = 0; i < messagesRender.length; i++) {
+            for (let i = 0; i < messageSent.length; i++) {
               list.push(false);
             }
             setCheckList(list);
@@ -192,176 +273,52 @@ const Inbox = ({ navigation }) => {
           }
           onPress={() => {
             setBtnGroupPress([false, false, true]);
-            setLocationPage(0);
-            setMessagesRender(messageDeleted[0]);
+            setMessagesRender(messageDeleted);
             let list = [];
-            for (let i = 0; i < messagesRender.length; i++) {
+            for (let i = 0; i < messageDeleted.length; i++) {
               list.push(false);
             }
             setCheckList(list);
           }}
         />
       </View>
-      <View style={styles.containerGroupAction}>
-        <View style={styles.containerSelectAllftDelete}>
-          <View style={styles.containerCheckboxAll}>
-            <CheckBox
-              center
-              checked={checkedAll}
-              onPress={() => {
-                setCheckedAll(!checkedAll);
-                let list = [];
-                for (let i = 0; i < messagesRender.length; i++) {
-                  list.push(!checkedAll);
-                }
-                setCheckList(list);
-              }}
-            />
-          </View>
-          <View>
-            <Button
-              buttonStyle={styles.buttonDeleteStyle}
-              type="outline"
-              icon={<FontAwesome name="trash-o" size={24} color="red" />}
-            />
-          </View>
-        </View>
-        <View style={styles.containerPaginationBtn}>
-          <Button
-            buttonStyle={styles.buttonPagination}
-            type="outline"
-            icon={<FontAwesome name="fast-backward" size={15} color="grey" />}
-            onPress={() => {
-              setLocationPage(0);
-              if (btnGroupPress[0]) {
-                setMessagesRender(messageInbox[0]);
-              } else if (btnGroupPress[1]) {
-                setMessagesRender(messageSent[0]);
-              } else if (btnGroupPress[2]) {
-                setMessagesRender(messageDeleted[0]);
-              }
-            }}
-          />
-          <Button
-            buttonStyle={styles.buttonPagination}
-            type="outline"
-            icon={<FontAwesome name="chevron-left" size={15} color="grey" />}
-            onPress={() => {
-              if (locationPage !== 0 && btnGroupPress[0]) {
-                setLocationPage(locationPage - 1);
-                setMessagesRender(messageInbox[locationPage - 1]);
-              } else if (locationPage !== 0 && btnGroupPress[1]) {
-                setLocationPage(locationPage - 1);
-                setMessagesRender(messageSent[locationPage - 1]);
-              } else if (locationPage !== 0 && btnGroupPress[2]) {
-                setLocationPage(locationPage - 1);
-                setMessagesRender(messageDeleted[locationPage - 1]);
-              }
-            }}
-          />
-          <Button
-            disabled
-            buttonStyle={styles.buttonLocation}
-            titleStyle={styles.buttonLocationTitle}
-            type="outline"
-            title={`Trang ${locationPage + 1}: ${
-              btnGroupPress[2]
-                ? messageDeleted.length
-                : btnGroupPress[1]
-                ? messageSent.length
-                : messageInbox.length
-            }`}
-          />
-          <Button
-            buttonStyle={styles.buttonPagination}
-            type="outline"
-            icon={<FontAwesome name="chevron-right" size={15} color="grey" />}
-            onPress={() => {
-              if (
-                locationPage !== messageInbox.length - 1 &&
-                btnGroupPress[0]
-              ) {
-                setLocationPage(locationPage + 1);
-                setMessagesRender(messageInbox[locationPage + 1]);
-              } else if (
-                locationPage !== messageSent.length - 1 &&
-                btnGroupPress[1]
-              ) {
-                setLocationPage(locationPage + 1);
-                setMessagesRender(messageSent[locationPage + 1]);
-              } else if (
-                locationPage !== messageDeleted.length - 1 &&
-                btnGroupPress[2]
-              ) {
-                setLocationPage(locationPage + 1);
-                setMessagesRender(messageDeleted[locationPage + 1]);
-              }
-            }}
-          />
-          <Button
-            buttonStyle={styles.buttonPagination}
-            type="outline"
-            icon={<FontAwesome name="fast-forward" size={15} color="grey" />}
-            onPress={() => {
-              if (btnGroupPress[0]) {
-                setLocationPage(messageInbox.length - 1);
-                setMessagesRender(messageInbox[messageInbox.length - 1]);
-              } else if (btnGroupPress[1]) {
-                setLocationPage(messageInbox.length - 1);
-                setMessagesRender(messageSent[messageInbox.length - 1]);
-              } else if (btnGroupPress[2]) {
-                setLocationPage(messageInbox.length - 1);
-                setMessagesRender(messageDeleted[messageInbox.length - 1]);
-              }
-            }}
-          />
-        </View>
-      </View>
       <FlatList
         data={messagesRender}
-        renderItem={({ item, index }) => (
-          <ListMessages
-            message={item}
-            checkList={checkList}
-            index={index}
-            onPress={() => {
-              if (!item.thoiGianNhan) {
-                var tempMessage = { ...item },
-                  date = new Date(),
-                  timeViewedtemp = `${
-                    date.getDate() > 9 ? date.getDate() : "0" + date.getDate()
-                  }-${
-                    date.getMonth() > 8
-                      ? date.getMonth() + 1
-                      : "0" + (date.getMonth() + 1)
-                  }-${date.getFullYear()} ${
-                    date.getHours() > 9
-                      ? date.getHours()
-                      : "0" + date.getHours()
-                  }:${
-                    date.getMinutes() > 9
-                      ? date.getMinutes()
-                      : "0" + date.getMinutes()
-                  }`;
-                tempMessage.thoiGianNhan = timeViewedtemp;
-                item.thoiGianNhan = timeViewedtemp;
-                setBold(!bold);
-                axios.put(
-                  `https://5e88429a19f5190016fed3f8.mockapi.io/school/message/${item.id}`,
-                  tempMessage
-                );
-              }
-              navigation.navigate("Message", {
-                message: item,
-              });
-            }}
-            onChecked={() => {
-              var tempList = [...checkList];
-              tempList[index] = !tempList[index];
-              setCheckList(tempList);
-            }}
-          />
-        )}
+        renderItem={({ item, index }) =>
+          (!filterInput.trim()
+            ? true
+            : changeAlias(item.title).includes(changeAlias(filterInput)) ||
+              changeAlias(item.nguoiGui.name).includes(
+                changeAlias(filterInput)
+              )) && (
+            <ListMessages
+              message={item}
+              checkList={checkList}
+              index={index}
+              onPress={() => {
+                if (!item.thoiGianNhan) {
+                  var tempMessage = { ...item },
+                    timeViewedtemp = getLocalDateTimeFormat();
+                  tempMessage.thoiGianNhan = timeViewedtemp;
+                  item.thoiGianNhan = timeViewedtemp;
+                  setBold(!bold);
+                  axios.put(
+                    `https://5e88429a19f5190016fed3f8.mockapi.io/school/message/${item.id}`,
+                    tempMessage
+                  );
+                }
+                navigation.navigate("Message", {
+                  message: item,
+                });
+              }}
+              onChecked={() => {
+                var tempList = [...checkList];
+                tempList[index] = !tempList[index];
+                setCheckList(tempList);
+              }}
+            />
+          )
+        }
         keyExtractor={(item) => `${item.thoiGianGui}`}
         contentContainerStyle={{ paddingHorizontal: 10 }}
       />
@@ -420,7 +377,7 @@ const styles = StyleSheet.create({
   },
   titleHeader: {
     textTransform: "uppercase",
-    color: "#004275",
+    color: "#3076F1",
     fontSize: 20,
     fontWeight: "bold",
     padding: 10,
@@ -437,57 +394,46 @@ const styles = StyleSheet.create({
   },
   buttonStyle: {
     backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    borderColor: "#F4F4F4",
-    borderTopRightRadius: 6,
-    borderTopLeftRadius: 6,
+    paddingBottom: 0,
+    paddingTop: 10,
   },
   buttonTitleStyle: {
-    color: "#337AB7",
-    fontSize: 13,
+    fontSize: 15,
+    color: "#000",
   },
   buttonStylePress: {
-    backgroundColor: "#F4F4F4",
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    borderColor: "#F4F4F4",
-    borderTopRightRadius: 6,
-    borderTopLeftRadius: 6,
+    backgroundColor: "#fff",
+    paddingBottom: 0,
+    paddingTop: 10,
+    borderBottomWidth: 2,
+    borderColor: "#3076F1",
   },
   buttonTitleStylePress: {
+    fontSize: 15,
     color: "#000",
-    fontSize: 13,
   },
   containerGroupAction: {
-    backgroundColor: "#FFF",
-    height: 30,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  containerSelectAllftDelete: {
+    height: 50,
+    width: width,
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
-  },
-  containerPaginationBtn: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    marginRight: 5,
+    marginRight: 0,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#dbdbdb",
   },
   containerCheckboxAll: {
     marginLeft: 21,
     borderWidth: 0,
     borderColor: "#777",
     width: 30,
-    height: 30,
+    height: 50,
   },
   buttonDeleteStyle: {
     borderWidth: 0,
     width: 40,
-    height: 30,
-    marginBottom: 5,
+    height: 50,
+    marginBottom: 0,
     marginLeft: 10,
   },
   buttonLocation: {

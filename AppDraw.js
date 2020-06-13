@@ -9,13 +9,25 @@ import {
   TouchableOpacity,
   Picker,
   Dimensions,
+  SafeAreaView 
 } from "react-native";
 import { Badge } from "react-native-elements";
 import { FontAwesome } from "@expo/vector-icons";
 import { connect } from "react-redux";
 import { AuthContext } from "./AppNavigator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-// import AnimatedTabBar, { TabsConfigsType } from 'curved-bottom-navigation-bar';
+import * as ImagePicker from "expo-image-picker";
+
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+} from "@react-navigation/drawer";
+
+import { actPostStudentAvatarRequest } from "./actions/index";
 
 //Account
 import UserProfileStackScreen from "./screens/Account/UserProfile";
@@ -40,31 +52,13 @@ import ScheduleOfExamStackScreen from "./screens/Studying/ScheduleOfExam";
 import HistoryTuitionStackScreen from "./screens/Tuition/HistoryTuition";
 import PaymentStackScreen from "./screens/Tuition/Payment";
 
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import {
-  createDrawerNavigator,
-  DrawerContentScrollView,
-  DrawerItemList,
-  DrawerItem,
-} from "@react-navigation/drawer";
-
 const { width, height } = Dimensions.get("window");
-
-// const tabs: TabsConfigsType = {
-//   Home: {
-//       icon: ({ progress }) => /* ICON COMPONENT */
-//   },
-//   Profile: {
-//       icon: ({ progress }) => /* ICON COMPONENT */
-//   },
-// }
 
 const MyTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: "#fff",
+    background: "#EFF1F7",
   },
 };
 const Tab = createBottomTabNavigator();
@@ -112,9 +106,9 @@ const GeneralFunctionsTabScreen = () => {
           let iconName;
           color = focused ? "blue" : "gray";
           if (route.name === "news") {
-            iconName = "newspaper-o";
+            iconName = "home";
           } else if (route.name === "timeTable") {
-            iconName = "calendar";
+            iconName = "tasks";
           } else if (route.name === "message") {
             iconName = "envelope";
           }
@@ -145,7 +139,7 @@ const GeneralFunctionsTabScreen = () => {
       <Tab.Screen
         name="news"
         component={NewsStackScreen}
-        options={{ title: "Tin Tức - T.Báo" }}
+        options={{ title: "Trang chủ" }}
       />
       <Tab.Screen
         name="timeTable"
@@ -184,14 +178,14 @@ const StatisticsTabScreen = () => {
       }}
     >
       <Tab.Screen
-        name="historyOfStudying"
-        component={HistoryOfStudyingStackScreen}
-        options={{ title: "L.Sử Q.Trình học" }}
-      />
-      <Tab.Screen
         name="studyResult"
         component={StudyResultStackScreen}
         options={{ title: "Kết quả học tập" }}
+      />
+      <Tab.Screen
+        name="historyOfStudying"
+        component={HistoryOfStudyingStackScreen}
+        options={{ title: "Quá trình học tập" }}
       />
       <Tab.Screen
         name="conduct"
@@ -233,7 +227,7 @@ const StudyingTabScreen = () => {
       <Tab.Screen
         name="registeredCourses"
         component={RegisteredCoursesStackScreen}
-        options={{ title: "Lớp H.Phần đã ĐK" }}
+        options={{ title: "Học phần đã ĐK" }}
       />
       <Tab.Screen
         name="scheduleOfExam"
@@ -282,6 +276,40 @@ DrawerContent = (props) => {
   //console.log(props.avatar);
   const { signOut } = useContext(AuthContext);
   const [hocKy, sethocKy] = useState("Học kỳ 2 - 2019-2020");
+  const [avatarResult, setAvatarResult] = useState("");
+  var { dataToken, name, avatar, postAvatar } = props;
+
+  const _pickImg = async () => {
+    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      base64: true,
+      allowsEditing: false,
+      aspect: [3, 3],
+      quality: 1,
+    });
+
+    if (pickerResult.base64) {
+      Alert.alert(
+        "Xác nhận",
+        "Bạn xác nhận muốn thay đổi Ảnh đại diện?",
+        [
+          {
+            text: "Đồng ý",
+            onPress: () => {
+              setAvatarResult(pickerResult);
+              postAvatar(dataToken, pickerResult.base64);
+            },
+          },
+          {
+            text: "Không",
+            style: "cancel",
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  };
+
   return (
     <DrawerContentScrollView {...props} style={{ height: height }}>
       <View
@@ -296,14 +324,34 @@ DrawerContent = (props) => {
             source={require("./assets/bg-avatar.jpg")}
             style={{ width: undefined, padding: 16 }}
           >
-            <Image
-              source={
-                props.avatar
-                  ? { uri: `data:image/png;base64,${props.avatar}` }
-                  : require("./assets/avatar-default.png")
-              }
-              style={styles.profile}
-            />
+            <View style={{ width: 100, height: 100, borderRadius: 50 }}>
+              <Image
+                source={
+                  !avatarResult
+                    ? avatar
+                      ? { uri: `data:image/png;base64,${avatar}` }
+                      : require("./assets/avatar-default.png")
+                    : { uri: `data:image/png;base64,${avatarResult.base64}` }
+                }
+                style={styles.profile}
+              />
+              <TouchableOpacity
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: 0,
+                  width: 30,
+                  height: 30,
+                  backgroundColor: "blue",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 30,
+                }}
+                onPress={_pickImg}
+              >
+                <FontAwesome name="pencil" size={23} color="#fff" />
+              </TouchableOpacity>
+            </View>
             {/* <Image source={require("./assets/avatar.jpg")} style={styles.profile} /> */}
             <View
               style={{
@@ -312,7 +360,7 @@ DrawerContent = (props) => {
                 flexWrap: "wrap",
               }}
             >
-              <Text style={styles.name}>{props.name} </Text>
+              <Text style={styles.name}>{name} </Text>
               <TouchableOpacity
                 activeOpacity={0.1}
                 onPress={() =>
@@ -343,7 +391,7 @@ DrawerContent = (props) => {
             borderColor: "#dbdbdb",
             backgroundColor: "#f2f2f2",
             marginHorizontal: 10,
-            marginBottom: 0,
+            marginBottom: 10
           }}
         >
           <Picker
@@ -382,11 +430,13 @@ DrawerContent = (props) => {
   );
 };
 
-const AppDraw = ({ studentProfile, avatar }) => {
+const AppDraw = ({ studentProfile, avatar, dataToken, postAvatar }) => {
   var name = studentProfile.HoVaTen,
-    avatar;
+    avatar,
+    dataToken,
+    postAvatar;
   return (
-    <SafeAreaProvider>
+    <SafeAreaView style={{flex:1}}>
       <NavigationContainer theme={MyTheme}>
         <Drawer.Navigator
           screenOptions={({ route }) => ({
@@ -394,7 +444,7 @@ const AppDraw = ({ studentProfile, avatar }) => {
               let iconName;
               color = focused ? "blue" : "black";
 
-              if (route.name === "Các chức năng chung") {
+              if (route.name === "Trang chủ") {
                 iconName = "home";
               } else if (route.name === "Tài khoản") {
                 iconName = "vcard";
@@ -402,10 +452,10 @@ const AppDraw = ({ studentProfile, avatar }) => {
                 iconName = "book";
               } else if (route.name === "Số liệu - Tổng hợp") {
                 iconName = "bar-chart";
-              } else if (route.name === "Học phí- Lệ phí") {
+              } else if (route.name === "Học phí - Lệ phí") {
                 iconName = "money";
               }
-              return route.name === "Các chức năng chung" ? (
+              return route.name === "Trang chủ" ? (
                 <View>
                   <FontAwesome
                     style={{ marginLeft: 10, minWidth: 35, maxWidth: 35 }}
@@ -434,11 +484,17 @@ const AppDraw = ({ studentProfile, avatar }) => {
             inactiveTintColor: "black",
           }}
           drawerContent={(props) => (
-            <DrawerContent {...props} name={name} avatar={avatar} />
+            <DrawerContent
+              {...props}
+              name={name}
+              avatar={avatar}
+              dataToken={dataToken}
+              postAvatar={postAvatar}
+            />
           )}
         >
           <Drawer.Screen
-            name="Các chức năng chung"
+            name="Trang chủ"
             component={GeneralFunctionsTabScreen}
           />
           <Drawer.Screen name="Tài khoản" component={AccountTabScreen} />
@@ -450,10 +506,10 @@ const AppDraw = ({ studentProfile, avatar }) => {
             name="Số liệu - Tổng hợp"
             component={StatisticsTabScreen}
           />
-          <Drawer.Screen name="Học phí- Lệ phí" component={TuitionTabScreen} />
+          <Drawer.Screen name="Học phí - Lệ phí" component={TuitionTabScreen} />
         </Drawer.Navigator>
       </NavigationContainer>
-    </SafeAreaProvider>
+    </SafeAreaView>
   );
 };
 
@@ -479,9 +535,18 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = (state) => {
   return {
+    dataToken: state.dataToken,
     studentProfile: state.studentProfile,
     avatar: state.avatar,
   };
 };
 
-export default connect(mapStateToProps, null)(AppDraw);
+const mapDispatchToProps = (dispatch, props) => {
+  return {
+    postAvatar: (token, avatarData) => {
+      dispatch(actPostStudentAvatarRequest(token, avatarData));
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(AppDraw);

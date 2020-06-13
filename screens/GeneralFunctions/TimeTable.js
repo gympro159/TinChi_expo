@@ -9,24 +9,27 @@ import {
   Picker,
 } from "react-native";
 import { Text, Button } from "react-native-elements";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { createStackNavigator } from "@react-navigation/stack";
+import { connect } from "react-redux";
 import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
 import _ from "lodash";
 import axios from "axios";
+import { Table, TableWrapper, Col } from "react-native-table-component";
+import Spinner from "react-native-loading-spinner-overlay";
 import {
-  Table,
-  TableWrapper,
-  Row,
-  Rows,
-  Col,
-} from "react-native-table-component";
-import CourseStackScreen from "./../Course/Course";
+  getDateFormat,
+  getLocalDateFormat,
+  getDateISOStringZoneTime,
+} from "./../../constants/common";
+import Course from "./../Course/Course";
+import Compose from "./Compose";
 import Subject from "./../Subject/Subject";
 
 const { width, height } = Dimensions.get("window");
 
-const TimeTable = ({ navigation }) => {
+const TimeTable = ({ navigation, thoiKhoaBieu }) => {
   const cellContent = (value) => {
     return value.length > 0 ? (
       <View>
@@ -49,7 +52,7 @@ const TimeTable = ({ navigation }) => {
               <TouchableOpacity
                 onPress={() => {
                   navigation.navigate("Subject", {
-                    maHP: item.maHP,
+                    maHP: item.maLHP,
                   });
                 }}
               >
@@ -57,16 +60,18 @@ const TimeTable = ({ navigation }) => {
                   style={{
                     textAlign: "center",
                     fontWeight: "bold",
-                    color: "#337ab7",
+                    color: "#3076F1",
                   }}
                 >
-                  {item.tenHP}
+                  {item.TenLopHocPhan}
                 </Text>
               </TouchableOpacity>
               <Text style={{ textAlign: "center" }}>
-                {item.maHP}
+                {item.MaLopHocPhan}
                 {"\n"}
-                <Text style={{ color: "grey" }}>[{item.lichHoc}]</Text>
+                <Text style={{ color: "grey" }}>
+                  [{item.TietBatDau}-{item.TietKetThuc}, {item.TenPhongHoc}]
+                </Text>
               </Text>
             </View>
           );
@@ -86,150 +91,212 @@ const TimeTable = ({ navigation }) => {
     return content;
   };
 
-  const [courses, setCourses] = useState([]);
-  const [subjects, setSubjects] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [scheduleWeekSelected, setScheduleWeekSelected] = useState(0);
   const [scheduleDaySelected, setScheduleDaySelected] = useState(0);
-  const [btnGroupPress, setBtnGroupPress] = useState([]);
-  const [tableContent, setTableContent] = useState([]);
-
+  const [btnGroupPress, setBtnGroupPress] = useState([true, false, false, false, false, false, false]);
+  const [tableContent, setTableContent] = useState([[], [], []]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    Promise.all([
-      axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/subject`),
-      axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/course`),
-      axios.get(`https://5ebb82caf2cfeb001697cd36.mockapi.io/school/schedule`),
-    ]).then(([subjectRes, courseRes, scheduleRes]) => {
-      setSubjects(subjectRes.data);
-      setCourses(courseRes.data);
-      setSchedule(_.chunk(scheduleRes.data, 7));
-      var date = new Date(),
-        dateFormat = `${
-          date.getDate() > 9 ? date.getDate() : "0" + date.getDate()
-        }/${
-          date.getMonth() > 8
-            ? date.getMonth() + 1
-            : "0" + (date.getMonth() + 1)
-        }/${date.getFullYear()}`;
-      for (let i = 0; i < _.chunk(scheduleRes.data, 7).length; i++) {
-        let check = 0;
-        for (let j = 0; j < 7; j++) {
-          if (_.chunk(scheduleRes.data, 7)[i][j].day === dateFormat) {
-            check = 1;
-            setBtnGroupPress(_.fill([false, false, false, false, false, false, false], true, j, j + 1));
-            setTableContent(
-              handleTableContent(_.chunk(scheduleRes.data, 7), i, j)
-            );
-            setScheduleWeekSelected(i);
-            setScheduleDaySelected(j);
-            break;
-          }
+    var dateStartTemp = new Date(thoiKhoaBieu[0].NgayHoc),
+      dateEndTemp = new Date(thoiKhoaBieu[thoiKhoaBieu.length - 1].NgayHoc);
+    dateStartTemp.setDate(
+      dateStartTemp.getDay() === 0
+        ? dateStartTemp.getDate() - 6
+        : dateStartTemp.getDate() - dateStartTemp.getDay() + 1
+    );
+    dateEndTemp.setDate(
+      dateStartTemp.getDay() === 0
+        ? dateStartTemp.getDate() - 6
+        : dateEndTemp.getDate() - dateEndTemp.getDay() + 7
+    );
+    var scheduleMain = [];
+    for (let i = dateStartTemp; i <= dateEndTemp; i.setDate(i.getDate() + 1)) {
+      scheduleMain.push({
+        day: getDateFormat(i),
+        dayISO: getDateISOStringZoneTime(i),
+        sang: [],
+        chieu: [],
+        toi: [],
+      });
+    }
+    scheduleMain.forEach((day) => {
+      for (let i = 0, len = thoiKhoaBieu.length; i < len; i++) {
+        if (day.dayISO === thoiKhoaBieu[i].NgayHoc) {
+          if (thoiKhoaBieu[i].TietBatDau >= 9) {
+            day.toi.push(thoiKhoaBieu[i]);
+          } else if (thoiKhoaBieu[i].TietBatDau >= 5) {
+            day.chieu.push(thoiKhoaBieu[i]);
+          } else day.sang.push(thoiKhoaBieu[i]);
         }
-        if (check) break;
       }
     });
-  }, []);
+    var scheduleTemp = _.chunk(scheduleMain, 7);
+    
+    for (let i = 0; i < scheduleTemp.length; i++) {
+      let kt = 1;
+      for (let j = 0; j < 7; j++) {
+        if (
+          scheduleTemp[i][j].sang.length > 0 ||
+          scheduleTemp[i][j].chieu.length > 0 ||
+          scheduleTemp[i][j].toi.length > 0
+        ) {
+          kt = 0;
+          break;
+        }
+      }
+      if (kt === 1) {
+        scheduleTemp.splice(i, 1);
+        i--;
+      }
+    }
 
-  return (
-    <>
-      <View
-        style={{
-          borderWidth: 1,
-          borderRadius: 6,
-          borderColor: "#dbdbdb",
-          backgroundColor: "#f2f2f2",
-          marginHorizontal: 10,
-          marginBottom: 0,
-        }}
-      >
-        <Picker
-          selectedValue={scheduleWeekSelected}
-          style={{ height: 40, width: undefined }}
-          onValueChange={(value) => {
-            setScheduleWeekSelected(value);
-            setTableContent(
-              handleTableContent(schedule, value, scheduleDaySelected)
-            );
+    setSchedule(scheduleTemp);
+    setTableContent(handleTableContent(scheduleTemp, 0, 0)); // set tạm thời khóa biểu ngày đầu tiên
+
+    var dateFormat = getDateISOStringZoneTime(new Date());
+    for (let i = 0; i < scheduleTemp.length; i++) {
+      let check = 0;
+      for (let j = 0; j < 7; j++) {
+        if (scheduleTemp[i][j].dayISO === dateFormat) {
+          check = 1;
+          setBtnGroupPress(
+            _.fill(
+              [false, false, false, false, false, false, false],
+              true,
+              j,
+              j + 1
+            )
+          );
+          setTableContent(handleTableContent(scheduleTemp, i, j)); //set thời khóa biểu hôm nay
+          setScheduleWeekSelected(i);
+          setScheduleDaySelected(j);
+          break;
+        }
+      }
+      if (check) break;
+    }
+    setLoading(false);
+  }, [thoiKhoaBieu]);
+
+  return loading ? (
+    <Spinner
+      visible={loading}
+      textContent={"Đang tải..."}
+      textStyle={{ color: "#fff" }}
+    />
+  ) : (
+    <SafeAreaProvider>
+      <View style={{ justifyContent: "flex-start" }}>
+        <View
+          style={{
+            borderWidth: 1,
+            borderRadius: 6,
+            borderColor: "#dbdbdb",
+            backgroundColor: "#fff",
+            marginHorizontal: 2,
+            marginBottom: 0,
           }}
         >
-          {schedule.map((scheduleWeek, index) => {
-            return (
-              <Picker.Item
-                key={index}
-                label={`Từ ${scheduleWeek[0].day} đến ${scheduleWeek[6].day}`}
-                value={index}
-              />
-            );
-          })}
-        </Picker>
-      </View>
-      <FlatList
-        horizontal={true}
-        data={[
-          "Thứ 2",
-          "Thứ 3",
-          "Thứ 4",
-          "Thứ 5",
-          "Thứ 6",
-          "Thứ 7",
-          "Chủ nhật",
-        ]}
-        renderItem={({ item, index }) => (
-          <Button
-            key={index}
-            title={`${item}`}
-            buttonStyle={
-              btnGroupPress[index]
-                ? styles.buttonStylePress
-                : styles.buttonStyle
-            }
-            titleStyle={
-              btnGroupPress[index]
-                ? styles.buttonTitleStylePress
-                : styles.buttonTitleStyle
-            }
-            onPress={() => {
-              setBtnGroupPress(
-                _.fill(
-                  [false, false, false, false, false, false, false],
-                  true,
-                  index,
-                  index + 1
-                )
-              );
-              setScheduleDaySelected(index);
+          <Picker
+            selectedValue={scheduleWeekSelected}
+            style={{ height: 40, width: undefined }}
+            onValueChange={(value) => {
+              setScheduleWeekSelected(value);
               setTableContent(
-                handleTableContent(schedule, scheduleWeekSelected, index)
+                handleTableContent(schedule, value, scheduleDaySelected)
               );
             }}
-          />
-        )}
-        keyExtractor={(index) => `${index}`}
-        contentContainerStyle={{
-          marginLeft: 1,
-          marginBottom: 0,
-        }}
-      />
-      <ScrollView>
-        <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
-          <TableWrapper style={{ flexDirection: "row" }}>
-            <Col
-              data={["Buổi sáng", "Buổi chiều", "Buổi tối"]}
-              heightArr={[height * 0.27, height * 0.27, height * 0.25]}
-              width={56}
-              style={{ backgroundColor: "#F9F9F9" }}
-              textStyle={{ textAlign: "center" }}
+          >
+            {schedule.map((scheduleWeek, index) => {
+              return (
+                <Picker.Item
+                  key={index}
+                  label={`Từ ${scheduleWeek[0].day} đến ${scheduleWeek[6].day}`}
+                  value={index}
+                />
+              );
+            })}
+          </Picker>
+        </View>
+        <FlatList
+          horizontal={true}
+          //showsHorizontalScrollIndicator={false}
+          data={[
+            "Thứ 2",
+            "Thứ 3",
+            "Thứ 4",
+            "Thứ 5",
+            "Thứ 6",
+            "Thứ 7",
+            "Chủ nhật",
+          ]}
+          renderItem={({ item, index }) => (
+            <Button
+              key={index}
+              title={`${item}`}
+              buttonStyle={
+                btnGroupPress[index]
+                  ? styles.buttonStylePress
+                  : styles.buttonStyle
+              }
+              titleStyle={
+                btnGroupPress[index]
+                  ? styles.buttonTitleStylePress
+                  : styles.buttonTitleStyle
+              }
+              onPress={() => {
+                setBtnGroupPress(
+                  _.fill(
+                    [false, false, false, false, false, false, false],
+                    true,
+                    index,
+                    index + 1
+                  )
+                );
+                setScheduleDaySelected(index);
+                setTableContent(
+                  handleTableContent(schedule, scheduleWeekSelected, index)
+                );
+              }}
             />
-            <Col
-              data={tableContent}
-              heightArr={[height * 0.27, height * 0.27, height * 0.25]}
-            />
-          </TableWrapper>
-        </Table>
-      </ScrollView>
-    </>
+          )}
+          keyExtractor={(index) => `${index}`}
+          contentContainerStyle={{
+            marginLeft: 1,
+            marginBottom: 0,
+          }}
+        />
+        <ScrollView>
+          <Table borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}>
+            <TableWrapper style={{ flexDirection: "row" }}>
+              <Col
+                data={["Buổi sáng", "Buổi chiều", "Buổi tối"]}
+                heightArr={[height * 0.25, height * 0.25, height * 0.22]}
+                width={56}
+                style={{ backgroundColor: "#F9F9F9" }}
+                textStyle={{ textAlign: "center" }}
+              />
+              <Col
+                data={tableContent}
+                style={{ backgroundColor: "#fff" }}
+                heightArr={[height * 0.25, height * 0.25, height * 0.22]}
+              />
+            </TableWrapper>
+          </Table>
+        </ScrollView>
+      </View>
+    </SafeAreaProvider>
   );
 };
+
+const mapStateToProps = (state) => {
+  return {
+    thoiKhoaBieu: state.thoiKhoaBieu,
+  };
+};
+
+const TimeTableConnect = connect(mapStateToProps, null)(TimeTable);
 
 const Stack = createStackNavigator();
 
@@ -238,7 +305,7 @@ export default TimeTableStackScreen = ({ navigation }) => {
     <Stack.Navigator>
       <Stack.Screen
         name="TimeTable"
-        component={TimeTable}
+        component={TimeTableConnect}
         options={{
           headerTitleAlign: "center",
           title: "Thời khóa biểu",
@@ -264,15 +331,24 @@ export default TimeTableStackScreen = ({ navigation }) => {
         })}
       />
       <Stack.Screen
-        name="CourseStackScreen"
-        component={CourseStackScreen}
+        name="Course"
+        component={Course}
         options={({ route }) => ({
+          //headerShown: false,
           title: route.params.course.tenLHP,
           headerTitleAlign: "left",
           headerTitleStyle: {
-            width: width - 100,
+            width: WIDTH - 100,
           },
         })}
+      />
+      <Stack.Screen
+        name="Compose"
+        component={Compose}
+        options={{
+          headerTitleAlign: "center",
+          title: "Soạn tin",
+        }}
       />
     </Stack.Navigator>
   );
@@ -285,19 +361,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
     borderColor: "#F4F4F4",
     borderTopRightRadius: 10,
-    borderTopLeftRadius: 10
+    borderTopLeftRadius: 10,
   },
   buttonTitleStyle: {
-    color: "#337AB7",
+    color: "#3076F1",
     fontSize: 13,
   },
   buttonStylePress: {
-    backgroundColor: "#337AB7",
+    backgroundColor: "#3076F1",
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: "#F4F4F4",
     borderTopRightRadius: 10,
-    borderTopLeftRadius: 10
+    borderTopLeftRadius: 10,
   },
   buttonTitleStylePress: {
     color: "#fff",

@@ -1,9 +1,8 @@
 import React, { useState, useReducer, useEffect, createContext } from "react";
-import Axios from "axios";
 import { AsyncStorage } from "react-native";
 import { connect } from "react-redux";
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
+import * as Font from 'expo-font';
+import { FontAwesome } from "@expo/vector-icons";
 import {
   actPostAccountRequest,
   actDeleteToken,
@@ -13,15 +12,6 @@ import Login from "./screens/Login/Login";
 import AppDraw from "./AppDraw";
 
 export const AuthContext = createContext();
-const Stack = createStackNavigator();
-
-const MyTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: "#fff",
-  },
-};
 
 function AppNavigator({ dataToken, postAccount, deleteToken }) {
   const [auth, dispatch] = useReducer(
@@ -70,6 +60,14 @@ function AppNavigator({ dataToken, postAccount, deleteToken }) {
 
   //   bootstrapAsync();
   // }, []);
+
+  useEffect(() => {
+    Font.loadAsync({
+      Roboto: require('native-base/Fonts/Roboto.ttf'),
+      Roboto_medium: require('native-base/Fonts/Roboto_medium.ttf'),
+      ...FontAwesome.font,
+    });
+  }, [])
 
   const authContext = React.useMemo(
     () => ({

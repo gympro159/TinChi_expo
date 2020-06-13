@@ -15,27 +15,13 @@ import "intl/locale-data/jsonp/en";
 import { NumberFormat, I18nProvider } from "@lingui/react";
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
-import Compose from "./../GeneralFunctions/Compose";
+// import Compose from "./../GeneralFunctions/Compose";
 
 const WIDTH = Dimensions.get("window").width;
 
-const Course = ({ route, navigation }) => {
+export default Course = ({ route, navigation }) => {
   const [btnGroupPress, setBtnGroupPress] = useState([true, false]);
   var { course, subject } = route.params;
-  const [titleTable, setTitleTable] = useState([
-    "Điểm CC",
-    "Điểm KT1",
-    "Điểm KT2",
-    "Điểm KT3",
-    "Điểm KT4",
-    "Điểm KT5",
-    "Điểm QTHT",
-  ]);
-  const [titleTableStudent, setTitleTableStudent] = useState([
-    "STT",
-    "Mã sinh viên",
-    "Họ và tên",
-  ]);
   const [contentTable, setContentTable] = useState([
     `${course.diemCC === null ? "" : course.diemCC.toFixed(1)}`,
     `${course.diemKT1 === null ? "" : course.diemKT1.toFixed(1)}`,
@@ -77,30 +63,6 @@ const Course = ({ route, navigation }) => {
       >
         THÔNG TIN VỀ LỚP HỌC PHẦN
       </Text>
-      {!subject.daDK && (
-        <View
-          style={{ alignItems: "center", marginHorizontal: 20, marginTop: 10 }}
-        >
-          <Button
-            title="Đăng ký lớp học phần này"
-            buttonStyle={{ backgroundColor: "green", borderRadius: 10 }}
-            onPress={() =>
-              Alert.alert(
-                "Xác nhận",
-                "Bạn xác nhận muốn đăng ký lớp học phần này?",
-                [
-                  { text: "Đồng ý", style: "cancel" },
-                  {
-                    text: "Không",
-                    style: "cancel",
-                  },
-                ],
-                { cancelable: false }
-              )
-            }
-          />
-        </View>
-      )}
       <View
         style={{
           flexDirection: "row",
@@ -164,7 +126,7 @@ const Course = ({ route, navigation }) => {
           </View>
           <View style={styles.content}>
             <Text style={styles.label}>Số tín chỉ: </Text>
-            <Text style={styles.input}>{subject.soTinChi}</Text>
+            <Text style={styles.input}>{subject.SoTinChi}</Text>
           </View>
           <View style={styles.content}>
             <Text style={styles.label}>Giảng viên: </Text>
@@ -172,7 +134,7 @@ const Course = ({ route, navigation }) => {
           </View>
           <View style={{ flexDirection: "row", marginBottom: 5 }}>
             <Text style={styles.label}>Đơn vị phụ trách: </Text>
-            <Text style={styles.input}>{subject.donViPhuTrach}</Text>
+            <Text style={styles.input}>{subject.MaDonVi}</Text>
           </View>
 
           <Text style={styles.title}>
@@ -201,8 +163,8 @@ const Course = ({ route, navigation }) => {
           <View style={styles.content}>
             <Text style={styles.label}>Số lượng sinh viên: </Text>
             <Text style={styles.input}>
-              Tối thiểu: {subject.soSVToiThieu}
-              {"\n"}Tối đa: {subject.soSVToiDa}
+              Tối thiểu: {subject.SoSinhVienToiThieu}
+              {"\n"}Tối đa: {subject.SoSinhVienToiDa}
               {"\n"}Đã đăng ký: {course.svDaDangKy}
               {"\n"}Đã duyệt: {course.svDaDuyet}
             </Text>
@@ -222,7 +184,7 @@ const Course = ({ route, navigation }) => {
           </View>
           <View style={{ flexDirection: "row", marginBottom: 5 }}>
             <Text style={styles.label}>Điểm kết thúc học phần: </Text>
-            <Text style={styles.input}>{course.formDiemHP}</Text>
+            <Text style={styles.input}>{subject.CongThucTinhDiemDanhGia}</Text>
           </View>
 
           <Text style={styles.title}>
@@ -264,15 +226,23 @@ const Course = ({ route, navigation }) => {
           <Text style={styles.title}>Kết quả đánh giá quá trình học tập</Text>
           <Table
             borderStyle={{
-              borderColor: "#dbdbdb",
+              borderColor: "#d6e4fc",
               borderWidth: 1,
               borderBottomWidth: 1,
             }}
           >
             <Row
-              data={titleTable}
+              data={[
+                "Điểm CC",
+                "Điểm KT1",
+                "Điểm KT2",
+                "Điểm KT3",
+                "Điểm KT4",
+                "Điểm KT5",
+                "Điểm QTHT",
+              ]}
               style={styles.titleTable}
-              textStyle={styles.titleTableText}
+              textStyle={{textAlign: "center"}}
               widthArr={[
                 WIDTH * 0.14,
                 WIDTH * 0.14,
@@ -285,7 +255,7 @@ const Course = ({ route, navigation }) => {
             />
             <Row
               data={contentTable}
-              textStyle={styles.titleTableText}
+              textStyle={styles.contentTableText}
               widthArr={[
                 WIDTH * 0.14,
                 WIDTH * 0.14,
@@ -302,21 +272,21 @@ const Course = ({ route, navigation }) => {
         <>
           <Table
             borderStyle={{
-              borderColor: "#dbdbdb",
+              borderColor: "#d6e4fc",
               borderWidth: 1,
             }}
           >
             <Row
-              data={titleTableStudent}
+              data={["STT", "Mã sinh viên", "Họ và tên"]}
               style={styles.titleTable}
-              textStyle={styles.titleTableSchoolText}
+              textStyle={styles.titleTableText}
               widthArr={[WIDTH * 0.1, WIDTH * 0.3, WIDTH * 0.6]}
             />
           </Table>
           <ScrollView style={{}}>
             <Table
               borderStyle={{
-                borderColor: "#dbdbdb",
+                borderColor: "#d6e4fc",
                 borderWidth: 1,
               }}
             >
@@ -328,7 +298,7 @@ const Course = ({ route, navigation }) => {
                     style={
                       index % 2 ? styles.contentTable2 : styles.contentTable
                     }
-                    textStyle={styles.titleTableSchoolText}
+                    textStyle={styles.contentTableText}
                     widthArr={[WIDTH * 0.1, WIDTH * 0.3, WIDTH * 0.6]}
                   />
                 );
@@ -344,7 +314,8 @@ const Course = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginVertical: 10,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
   },
   buttonStyle: {
     backgroundColor: "#FFF",
@@ -394,11 +365,11 @@ const styles = StyleSheet.create({
     paddingRight: 170,
   },
   titleTable: {
-    backgroundColor: "#d2d2d2",
+    backgroundColor: "#d6e4fc",
     height: 40,
   },
   contentTable: {
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "#eaf1fe",
     minHeight: 40,
   },
   contentTable2: {
@@ -407,45 +378,9 @@ const styles = StyleSheet.create({
   },
   titleTableText: {
     textAlign: "center",
+    fontWeight: "bold",
   },
-  titleTableSchoolText: {
+  contentTableText: {
     textAlign: "center",
   },
 });
-
-const Stack = createStackNavigator();
-
-export default CourseStackScreen = ({ route, navigation }) => {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          height: 50,
-        },
-        headerLeftContainerStyle: {
-          marginTop: -30,
-          marginLeft: 20,
-        },
-        headerTitleStyle: {
-          marginTop: -30,
-        },
-      }}
-    >
-      <Stack.Screen
-        name="Course"
-        component={Course}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="Compose"
-        component={Compose}
-        options={{
-          headerTitleAlign: "center",
-          title: "Soạn tin",
-        }}
-      />
-    </Stack.Navigator>
-  );
-};

@@ -7,6 +7,8 @@ const avatar = (state = initialState, action) => {
     switch (action.type) {
         case Types.FETCH_STUDENT_AVATAR:
             return avatar;
+        case Types.POST_STUDENT_AVATAR:
+            return avatar;
         default: return state;
     }
 };

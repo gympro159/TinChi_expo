@@ -1,3 +1,5 @@
+import _ from "lodash"
+
 export function pad2(n) {
   return n < 10 ? "0" + n : n;
 }
@@ -12,16 +14,72 @@ export function convertTime(date) {
   return result;
 }
 
+export function getDateFormat(date) {
+  result = `${
+    date.getDate() > 9 ? date.getDate() : "0" + date.getDate()
+  }/${
+    date.getMonth() > 8
+      ? date.getMonth() + 1
+      : "0" + (date.getMonth() + 1)
+  }/${date.getFullYear()}`;
+  return result;
+}
+
+export function getLocalDateTimeFormat() {
+  var date = new Date(),
+  result = `${
+    date.getDate() > 9 ? date.getDate() : "0" + date.getDate()
+  }-${
+    date.getMonth() > 8
+      ? date.getMonth() + 1
+      : "0" + (date.getMonth() + 1)
+  }-${date.getFullYear()} ${
+    date.getHours() > 9
+      ? date.getHours()
+      : "0" + date.getHours()
+  }:${
+    date.getMinutes() > 9
+      ? date.getMinutes()
+      : "0" + date.getMinutes()
+  }`;
+  return result;
+}
+
+export function getLocalDateFormat() {
+  var date = new Date(),
+  result = `${
+    date.getDate() > 9 ? date.getDate() : "0" + date.getDate()
+  }/${
+    date.getMonth() > 8
+      ? date.getMonth() + 1
+      : "0" + (date.getMonth() + 1)
+  }/${date.getFullYear()}`;
+  return result;
+}
+
+export function getLocalDateFormat2() {
+  var date = new Date(),
+  result = `${
+    date.getDate() > 9 ? date.getDate() : "0" + date.getDate()
+  }-${
+    date.getMonth() > 8
+      ? date.getMonth() + 1
+      : "0" + (date.getMonth() + 1)
+  }-${date.getFullYear()}`;
+  return result;
+}
+
+export function getDateISOStringZoneTime(params) {
+  var tzoffset = params.getTimezoneOffset() * 60000;
+  var localISOTime = (new Date(params - tzoffset)).toISOString().slice(0, -13)+"00:00:00";
+  return localISOTime;
+  //return "2019-09-03T00:00:00";
+}
+
 export function changeAlias(alias) {
   var str = alias.toString();
   str = str.toLowerCase();
-  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
-  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
-  str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); 
-  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
-  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); 
-  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); 
-  str = str.replace(/đ/g,"d");
+  // str = _.deburr(str); // bỏ dấu 
   str = str.trim(); 
   return str;
 }

@@ -1,20 +1,105 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Dimensions, ScrollView } from "react-native";
+import React, { useState, useContext } from "react";
+import { View, StyleSheet, Dimensions, ScrollView, Alert } from "react-native";
 import { Input, Button, Text } from "react-native-elements";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
+import { connect } from "react-redux";
+import Loader from "react-native-modal-loader";
+import md5 from "md5";
+import { AuthContext } from "./../../AppNavigator";
+import { actChangePasswordStudentRequest } from "./../../actions/index";
 
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
-const ChangePassword = () => {
+const ChangePassword = ({ dataToken, password, changePassword }) => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPassword2, setNewPassword2] = useState("");
+  const [confirm, setConfirm] = useState(-2);
+  const { signOut } = useContext(AuthContext);
+
+  const handleChangePassword = () => {
+    Alert.alert(
+      "Xác nhận",
+      "Xác nhận đổi mật khẩu?",
+      [
+        {
+          text: "Không",
+          style: "cancel",
+        },
+        {
+          text: "Đồng ý",
+          onPress: () => {
+            if (!oldPassword || !newPassword || !newPassword2) {
+              Alert.alert(
+                "Thông báo",
+                "Vui lòng điền đầy đủ thông tin!",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                ],
+                { cancelable: false }
+              );
+            } else if (newPassword !== newPassword2) {
+              Alert.alert(
+                "Thông báo",
+                "Mật khẩu mới không khớp!",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                ],
+                { cancelable: false }
+              );
+            } else if (oldPassword === newPassword) {
+              Alert.alert(
+                "Thông báo",
+                "Mật khẩu mới không được trùng với mật khẩu cũ!",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                ],
+                { cancelable: false }
+              );
+            } else if (md5(oldPassword) !== password) {
+              Alert.alert(
+                "Thông báo",
+                "Mật khẩu cũ đúng!",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                ],
+                { cancelable: false }
+              );
+            } else {
+              var dataBody = {
+                OldPassword: md5(oldPassword),
+                NewPassword: md5(newPassword),
+              };
+              setConfirm(0);
+              changePassword(dataToken, dataBody, setConfirm);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   return (
-    <View>
-      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}>
+    <View style={styles.container}>
+      <View
+        style={{ borderBottomWidth: 0.5, width: WIDTH, marginVertical: 10 }}
+      >
         <Text
           style={{
             fontSize: 20,
@@ -49,9 +134,13 @@ const ChangePassword = () => {
           placeholder="Xác nhận lại mật khẩu"
           secureTextEntry
         />
-        <Button title="Đổi mật khẩu" buttonStyle={styles.buttonSubmit} />
+        <Button
+          title="Đổi mật khẩu"
+          buttonStyle={styles.buttonSubmit}
+          onPress={handleChangePassword}
+        />
       </View>
-      <ScrollView style={{ marginLeft: 10, flexGrow: 1, height: HEIGHT-380 }}>
+      <ScrollView style={{ marginLeft: 10, flexGrow: 1, height: HEIGHT - 380 }}>
         <Text>
           <Text style={{ fontWeight: "bold" }}>Lưu ý:</Text>
           {"\n"}- Mật khẩu được sử dụng để đăng nhập vào hệ thống và có vai trò
@@ -66,9 +155,62 @@ const ChangePassword = () => {
           Việt trước khi thay đổi mật khẩu.
         </Text>
       </ScrollView>
+      {confirm === 0 ? (
+        <Loader loading={true} color="#000" />
+      ) : confirm === 1 ? (
+        Alert.alert(
+          "Thông báo",
+          "Đổi mật khẩu thành công!",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                setConfirm(-2);
+                signOut();
+              },
+              style: "cancel",
+            },
+          ],
+          { cancelable: false }
+        )
+      ) : (
+        confirm === -1 &&
+        Alert.alert(
+          "Thông báo",
+          "Đổi mật khẩu không thành công!",
+          [
+            {
+              text: "Cancel",
+              onPress: () => setConfirm(-2),
+              style: "cancel",
+            },
+          ],
+          { cancelable: false }
+        )
+      )}
     </View>
   );
 };
+
+const mapStateToProps = (state) => {
+  return {
+    dataToken: state.dataToken,
+    password: state.password,
+  };
+};
+
+const mapDispatchToProps = (dispatch, props) => {
+  return {
+    changePassword: (dataToken, dataBody, confirm) => {
+      dispatch(actChangePasswordStudentRequest(dataToken, dataBody, confirm));
+    },
+  };
+};
+
+const ChangePasswordConnect = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ChangePassword);
 
 const Stack = createStackNavigator();
 
@@ -77,7 +219,7 @@ export default ChangePasswordStackScreen = ({ navigation }) => {
     <Stack.Navigator>
       <Stack.Screen
         name="ChangePassword"
-        component={ChangePassword}
+        component={ChangePasswordConnect}
         options={{
           headerTitleAlign: "center",
           title: "Đổi mật khẩu",
@@ -113,7 +255,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#dbdbdb"
+    borderColor: "#dbdbdb",
+    zIndex: 5,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   textInput: {
     width: WIDTH * 0.9,

@@ -17,6 +17,7 @@ import {
   Cols,
   Cell,
 } from "react-native-table-component";
+import callApi from "./../../utils/apiCaller";
 import ListStudyTimes from "./../../components/ListStudyTimes/ListStudyTimes";
 
 const WIDTH = Dimensions.get("window").width;
@@ -35,23 +36,18 @@ export default Subject = ({ navigation, route }) => {
   ]);
   useEffect(() => {
     Promise.all([
-      axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/subject`),
+      callApi(`common/module/get?moduleId=${route.params.maHP}`),
       axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/course`),
     ])
       .then(([subjectRes, courseRes]) => {
-        for (let sub of subjectRes.data) {
-          if (sub.maHP === route.params.maHP) {
-            setSubject(sub);
-            let listCourse = [];
-            courseRes.data.forEach((course) => {
-              if (course.maHP === sub.maHP) {
-                listCourse.push(course);
-              }
-            });
-            setCourses(listCourse);
-            break;
+        setSubject(subjectRes.data.Data);
+        let listCourse = [];
+        courseRes.data.forEach((course) => {
+          if (course.maHP === route.params.maHP) {
+            listCourse.push(course);
           }
-        }
+        });
+        setCourses(listCourse);
       })
       .catch((err) => {
         console.log(err);
@@ -73,30 +69,30 @@ export default Subject = ({ navigation, route }) => {
         <Text style={styles.title}>Thông tin chung:</Text>
         <View style={styles.content}>
           <Text style={styles.label}>Tên học phần: </Text>
-          <Text style={styles.input}>{subject.tenHP}</Text>
+          <Text style={styles.input}>{subject.TenHocPhan}</Text>
         </View>
         <View style={styles.content}>
           <Text style={styles.label}>Mã học phần: </Text>
-          <Text style={styles.input}>{subject.maHP}</Text>
+          <Text style={styles.input}>{subject.MaHocPhan}</Text>
         </View>
         <View style={styles.content}>
           <Text style={styles.label}>Số tín chỉ: </Text>
-          <Text style={styles.input}>{subject.soTinChi}</Text>
+          <Text style={styles.input}>{subject.SoTinChi}</Text>
         </View>
         <View style={styles.content}>
           <Text style={styles.label}>Loại học phần: </Text>
-          <Text style={styles.input}>{subject.loaiHP}</Text>
+          <Text style={styles.input}>{subject.MaLoaiHocPhan}</Text>
         </View>
         <View style={styles.content}>
           <Text style={styles.label}>Trình độ đào tạo: </Text>
-          <Text style={styles.input}>{subject.trinhDoDaoTao}</Text>
+          <Text style={styles.input}>{subject.MaTrinhDo}</Text>
         </View>
         <View style={{ flexDirection: "row", marginBottom: 5 }}>
           <Text style={styles.label}>Đơn vị phụ trách: </Text>
-          <Text style={styles.input}>{subject.donViPhuTrach}</Text>
+          <Text style={styles.input}>{subject.MaDonVi}</Text>
         </View>
 
-        {subject.daDK && (
+        {courses.length>0 && (
           <>
             <Text style={styles.title}>
               Lịch sử quá trình học đối với học phần:
@@ -132,13 +128,9 @@ export default Subject = ({ navigation, route }) => {
                   index={index}
                   lengthList={courses.length}
                   onPressCourse={() => {
-                    navigation.navigate("CourseStackScreen", {
+                    navigation.navigate("Course", {
                       course: item,
-                      screen: "Course",
-                      params: {
-                        course: item,
-                        subject: subject,
-                      },
+                      subject: subject,
                     });
                   }}
                 />
@@ -151,11 +143,11 @@ export default Subject = ({ navigation, route }) => {
         </Text>
         <View style={styles.content}>
           <Text style={styles.label}>Số SV tối thiểu: </Text>
-          <Text style={styles.input}>{subject.soSVToiThieu}</Text>
+          <Text style={styles.input}>{subject.SoSinhVienToiThieu}</Text>
         </View>
         <View style={{ flexDirection: "row", marginBottom: 5 }}>
           <Text style={styles.label}>Số SV tối đa: </Text>
-          <Text style={styles.input}>{subject.soSVToiDa}</Text>
+          <Text style={styles.input}>{subject.SoSinhVienToiDa}</Text>
         </View>
       </ScrollView>
     </View>
@@ -165,7 +157,8 @@ export default Subject = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginVertical: 10,
+    backgroundColor: "#fff",
+    paddingVertical: 10,
   },
   content: {
     flexDirection: "row",
