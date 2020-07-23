@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Dimensions,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import axios from "axios";
 import {
@@ -17,6 +18,7 @@ import {
   Cols,
   Cell,
 } from "react-native-table-component";
+import Loader from "react-native-modal-loader";
 import callApi from "./../../utils/apiCaller";
 import ListStudyTimes from "./../../components/ListStudyTimes/ListStudyTimes";
 
@@ -34,16 +36,26 @@ export default Subject = ({ navigation, route }) => {
     "Điểm Thi",
     "Tổng điểm",
   ]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     Promise.all([
-      callApi(`common/module/get?moduleId=${route.params.maHP}`),
+      callApi(`common/module/get?moduleId=${route.params.MaHocPhan}`),
       axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/course`),
     ])
       .then(([subjectRes, courseRes]) => {
-        setSubject(subjectRes.data.Data);
+        var _subject = subjectRes.data.Data;
+        callApi(`common/department/get?deptId=${_subject.MaDonVi}`).then(
+          (res) => {
+            var subjectTemp = Object.assign({}, _subject, {
+              DonVi: res.data.Data,
+            });
+            setSubject(subjectTemp);
+            setLoading(false);
+          }
+        );
         let listCourse = [];
         courseRes.data.forEach((course) => {
-          if (course.maHP === route.params.maHP) {
+          if (course.maHP === route.params.MaHocPhan) {
             listCourse.push(course);
           }
         });
@@ -53,20 +65,33 @@ export default Subject = ({ navigation, route }) => {
         console.log(err);
       });
   }, []);
-  return (
+  return loading ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
+  ) : (
     <View style={styles.container}>
       <Text
         style={{
           fontSize: 20,
           fontWeight: "bold",
-          color: "#004275",
+          color: "#3076F1",
           marginLeft: 10,
         }}
       >
-        THÔNG TIN VỀ HỌC PHẦN
+        Thông tin về học phần
       </Text>
       <ScrollView>
-        <Text style={styles.title}>Thông tin chung:</Text>
+        <Text style={{marginTop: 3 ,marginLeft: 10, fontSize: 15, color: "blue" }}>
+          Thông tin chung:
+        </Text>
         <View style={styles.content}>
           <Text style={styles.label}>Tên học phần: </Text>
           <Text style={styles.input}>{subject.TenHocPhan}</Text>
@@ -89,16 +114,16 @@ export default Subject = ({ navigation, route }) => {
         </View>
         <View style={{ flexDirection: "row", marginBottom: 5 }}>
           <Text style={styles.label}>Đơn vị phụ trách: </Text>
-          <Text style={styles.input}>{subject.MaDonVi}</Text>
+          <Text style={styles.input}>{subject.DonVi.TenDonVi}</Text>
         </View>
 
-        {courses.length>0 && (
+        {courses.length > 0 && (
           <>
             <Text style={styles.title}>
               Lịch sử quá trình học đối với học phần:
             </Text>
             <TableWrapper
-              borderStyle={{ borderColor: "#dbdbdb", borderWidth: 1 }}
+              borderStyle={{ borderColor: "#fff", borderWidth: 0.3 }}
             >
               <Row
                 data={titleTable}
@@ -129,8 +154,7 @@ export default Subject = ({ navigation, route }) => {
                   lengthList={courses.length}
                   onPressCourse={() => {
                     navigation.navigate("Course", {
-                      course: item,
-                      subject: subject,
+                      course: item.maLHP
                     });
                   }}
                 />
@@ -139,7 +163,7 @@ export default Subject = ({ navigation, route }) => {
           </>
         )}
         <Text style={styles.title}>
-          Định mức sinh viên dự kiến khi mở lớp học phần:
+          Định mức sinh viên dự kiến:
         </Text>
         <View style={styles.content}>
           <Text style={styles.label}>Số SV tối thiểu: </Text>
@@ -168,7 +192,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: 20,
-    marginLeft: 5,
+    marginLeft: 10,
     fontSize: 15,
     color: "blue",
   },
@@ -184,7 +208,7 @@ const styles = StyleSheet.create({
     paddingRight: 170,
   },
   titleTable: {
-    backgroundColor: "#d2d2d2",
+    backgroundColor: "#d6e4fc",
   },
   titleTableText: {
     textAlign: "center",

@@ -21,92 +21,93 @@ export default Login = () => {
   const { signIn } = useContext(AuthContext);
 
   return (
-    <View>
-      {/* <Loader loading={loading} color="#000"/> */}
-      <ImageBackground
-        style={{ width, height: height * 1.1 }}
-        source={require("./../../assets/bg-avatar.jpg")}
-      >
-        <View style={styles.logoContainer}>
-          <Image
-            source={require("./../../assets/cems-logo.png")}
-            style={styles.logo}
-          />
-        </View>
+    <ImageBackground
+      style={{ width, height: height * 1.2, backgroundColor: "#486FBA" }}
+      source={require("./../../assets/blue-book-background.jpg")}
+    >
+      <View style={styles.logoContainer}>
+        <Image
+          source={require("./../../assets/cems-logo.png")}
+          style={styles.logo}
+        />
+      </View>
 
-        <View style={styles.container}>
-          <Text h4>Sinh viên</Text>
-          <Input
-            disabled={loading}
-            onChangeText={setUsername}
-            value={username}
-            style={styles.textInput}
-            placeholder="Mã sinh viên"
-            leftIcon={
-              <FontAwesome
-                name="user"
-                size={24}
-                color="#000"
-                style={{ marginRight: 10 }}
-              />
-            }
-            returnKeyType = { "next" }
-            onSubmitEditing={() => { secondTextInput.focus(); }}
-            blurOnSubmit={false}
-          />
-          <Input
-            ref={(input) => { secondTextInput = input; }}
-            disabled={loading}
-            onChangeText={setPassword}
-            value={password}
-            style={styles.textInput}
-            placeholder="Mật khẩu"
-            leftIcon={
-              <FontAwesome
-                name="lock"
-                size={24}
-                color="#000"
-                style={{ marginRight: 10 }}
-              />
-            }
-            secureTextEntry
-          />
-          <Button
-            title="Đăng nhập"
-            buttonStyle={styles.buttonSubmit}
-            disabledStyle={styles.buttonSubmitDisabled}
-            onPress={() => {
-              setLoading(true);
-              if (username === "" || password === "") {
+      <View style={styles.container}>
+        <Text h4>Sinh viên</Text>
+        <Input
+          disabled={loading}
+          onChangeText={setUsername}
+          value={username}
+          style={styles.textInput}
+          placeholder="Mã sinh viên"
+          leftIcon={
+            <FontAwesome
+              name="user"
+              size={24}
+              color="#000"
+              style={{ marginRight: 10 }}
+            />
+          }
+          returnKeyType={"next"}
+          onSubmitEditing={() => {
+            secondTextInput.focus();
+          }}
+          blurOnSubmit={false}
+        />
+        <Input
+          ref={(input) => {
+            secondTextInput = input;
+          }}
+          disabled={loading}
+          onChangeText={setPassword}
+          value={password}
+          style={styles.textInput}
+          placeholder="Mật khẩu"
+          leftIcon={
+            <FontAwesome
+              name="lock"
+              size={24}
+              color="#000"
+              style={{ marginRight: 10 }}
+            />
+          }
+          secureTextEntry
+        />
+        <Button
+          title="Đăng nhập"
+          buttonStyle={styles.buttonSubmit}
+          disabledStyle={styles.buttonSubmitDisabled}
+          onPress={() => {
+            setLoading(true);
+            if (username === "" || password === "") {
+              Alert.alert(
+                "Thông báo",
+                "Mã sinh viên và Mật khẩu không được để trống",
+                [{ text: "OK", onPress: () => setLoading(false) }],
+                { cancelable: false }
+              );
+            } else {
+              const setLoad = () => {
                 Alert.alert(
                   "Thông báo",
-                  "Mã sinh viên và Mật khẩu không được để trống",
-                  [{ text: "OK", onPress: () => setLoading(false) }],
+                  "Sai Mã sinh viên hoặc Mật khẩu",
+                  [
+                    {
+                      text: "OK",
+                      onPress: () => setLoading(false),
+                    },
+                  ],
                   { cancelable: false }
                 );
-              } else {
-                const setLoad = () => {
-                  Alert.alert(
-                    "Thông báo",
-                    "Sai Mã sinh viên hoặc Mật khẩu",
-                    [
-                      {
-                        text: "OK",
-                        onPress: () => setLoading(false),
-                      },
-                    ],
-                    { cancelable: false }
-                  );
-                };
-                signIn({ username, password, setLoad });
-              }
-            }}
-            loading={loading}
-            disabled={loading}
-          />
-        </View>
-      </ImageBackground>
-    </View>
+              };
+              signIn({ username, password, setLoad });
+            }
+          }}
+          loading={loading}
+          disabled={loading}
+        />
+      </View>
+    </ImageBackground>
   );
 };
 
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFF",
-    opacity: 0.8,
+    opacity: 0.9,
     zIndex: 999,
     elevation: 10,
     shadowColor: "#000",
@@ -154,14 +155,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderRadius: 10,
     width: 130,
-    backgroundColor: "#0080ff"
+    backgroundColor: "#0080ff",
   },
   buttonSubmitDisabled: {
     padding: 10,
     marginTop: 20,
     borderRadius: 10,
     width: 130,
-    backgroundColor: "#0080ff"
+    backgroundColor: "#0080ff",
   },
 });
 

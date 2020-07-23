@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
+import { connect } from "react-redux";
 import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
 import {
@@ -23,7 +24,7 @@ import _ from "lodash";
 
 const WIDTH = Dimensions.get("window").width;
 
-const ScheduleOfExam = ({ navigation }) => {
+const ScheduleOfExam = ({ navigation, hocKyTacNghiep }) => {
   const tableTitle = ["Lớp học phần", "Lần thi", "Ngày thi", "Phòng thi"];
 
   const [listSchedules, setListSchedules] = useState([
@@ -110,7 +111,9 @@ const ScheduleOfExam = ({ navigation }) => {
               textAlign: "center",
             }}
           >
-            Lịch thi kết thúc học phần {"\n"} {"Học kỳ 1 - 2019-2020"}
+            Lịch thi kết thúc học phần {"\n"} Học kỳ{" "}
+            {hocKyTacNghiep.HocKy === 3 ? "hè" : hocKyTacNghiep.HocKy} -{" "}
+            {hocKyTacNghiep.NamHoc}
           </Text>
         </View>
 
@@ -221,6 +224,14 @@ const ScheduleOfExam = ({ navigation }) => {
   );
 };
 
+const mapStateToProps = (state) => {
+  return {
+    hocKyTacNghiep: state.hocKyTacNghiep,
+  };
+};
+
+const ScheduleOfExamConnect = connect(mapStateToProps, null)(ScheduleOfExam);
+
 const Stack = createStackNavigator();
 
 export default ScheduleOfExamStackScreen = ({ navigation }) => {
@@ -228,7 +239,7 @@ export default ScheduleOfExamStackScreen = ({ navigation }) => {
     <Stack.Navigator>
       <Stack.Screen
         name="ScheduleOfExam"
-        component={ScheduleOfExam}
+        component={ScheduleOfExamConnect}
         options={{
           headerTitleAlign: "center",
           title: "Lịch thi",

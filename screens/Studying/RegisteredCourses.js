@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,10 @@ import {
   Dimensions,
   TouchableOpacity,
   FlatList,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
+import { connect } from "react-redux";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
@@ -16,98 +19,70 @@ import "intl";
 import "intl/locale-data/jsonp/en";
 import { NumberFormat, I18nProvider } from "@lingui/react";
 import _ from "lodash";
+import { actFetchStudentListLopHocPhanDKHTDaDKRequest } from "./../../actions/index";
+import callApi from "./../../utils/apiCaller";
+import { convertTime, getDateFormat } from "./../../constants/common";
 import Course from "./../Course/Course";
 import Subject from "./../Subject/Subject";
 import ListRegisteredCourses from "./../../components/ListRegisteredCourses/ListRegisteredCourses";
 
 const WIDTH = Dimensions.get("window").width;
 
-const RegisteredCourses = ({ navigation }) => {
-  const tableTitle = ["Số TC", "Lớp học phần", "Ngày bắt đầu", "Giảng viên"];
+const RegisteredCourses = ({
+  navigation,
+  hocKyTacNghiep,
+  dataToken,
+  lopHocPhanDKHTDaDK,
+  fetchStudentListLopHocPhanDKHTDaDK,
+}) => {
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [first, setFirst] = useState(true);
 
-  const [listRegisteredCourses, setListRegisteredCourses] = useState([
-    {
-      maLHP: "2019-2020.1.TIN4483.002",
-      tenLHP: "Xây dựng ứng dụng với .NET FrameWork - Nhóm 2",
-      soTC: 3,
-      lanHoc: 1,
-      giangVien: "Nguyễn Dũng",
-      ngayBatDau: "06/09/2019",
-      thoiKhoaBieu: "Thứ 6 [1-3, Lab 4_CNTT]",
-      hocPhi: 1050000,
-      duocDuyet: true,
-    },
-    {
-      maLHP: "2019-2020.1.TIN4133.001",
-      tenLHP: "Quản trị dự án phần mềm - Nhóm 1",
-      soTC: 3,
-      lanHoc: 1,
-      giangVien: "Nguyễn Mậu Hân",
-      ngayBatDau: "03/09/2019",
-      thoiKhoaBieu: "Thứ 3 [6-8, Lab 2_CNTT]",
-      hocPhi: 1050000,
-      duocDuyet: true,
-    },
-    {
-      maLHP: "2019-2020.1.TIN4113.001",
-      tenLHP: "Quy trình phát triển phần mềm - Nhóm 1",
-      soTC: 3,
-      lanHoc: 1,
-      giangVien: "Hoàng Nguyễn Tuấn Minh",
-      ngayBatDau: "12/09/2019",
-      thoiKhoaBieu: "Thứ 5 [1-3, Lab 2_CNTT]",
-      hocPhi: 1050000,
-      duocDuyet: true,
-    },
-    {
-      maLHP: "2019-2020.1.TIN4183.002",
-      tenLHP: "Kiểm định phần mềm - Nhóm 2",
-      soTC: 3,
-      lanHoc: 1,
-      giangVien: "Lê Văn Tường Lân",
-      ngayBatDau: "04/09/2019",
-      thoiKhoaBieu: "Thứ 4 [6-8, Lab 5_CNTT]",
-      hocPhi: 1050000,
-      duocDuyet: true,
-    },
-    {
-      maLHP: "2019-2020.1.TIN4253.001",
-      tenLHP: "Mẫu thiết kế - Nhóm 1",
-      soTC: 3,
-      lanHoc: 1,
-      giangVien: "Nguyễn Văn Trung",
-      ngayBatDau: "06/09/2019",
-      thoiKhoaBieu: "Thứ 6 [6-8, E401]",
-      hocPhi: 1050000,
-      duocDuyet: true,
-    },
-    {
-      maLHP: "2019-2020.1.TIN4403.003",
-      tenLHP: "Lập trình ứng dụng cho các thiết bị di động - Nhóm 3",
-      soTC: 3,
-      lanHoc: 1,
-      giangVien: "Lê Mỹ Cảnh",
-      ngayBatDau: "06/09/2019",
-      thoiKhoaBieu: "Thứ 4 [1-3, Lab 1_CNTT]",
-      hocPhi: 1050000,
-      duocDuyet: true,
-    },
-    {
-      maLHP: "2019-2020.1.TIN4013.004",
-      tenLHP: "Java nâng cao - Nhóm 4",
-      soTC: 3,
-      lanHoc: 1,
-      giangVien: "Nguyễn Hoàng Hà",
-      ngayBatDau: "05/09/2019",
-      thoiKhoaBieu: "Thứ 5 [1-3, Lab 4_CNTT]",
-      hocPhi: 1050000,
-      duocDuyet: false,
-    },
-  ]);
+  const fetchData = () => {
+    fetchStudentListLopHocPhanDKHTDaDK(dataToken, hocKyTacNghiep.MaHocKy);
+    setFirst(false);
+  };
 
-  return (
+  useEffect(() => {
+    setLoading(true);
+    if (!first) fetchData();
+  }, [hocKyTacNghiep]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (lopHocPhanDKHTDaDK.length) {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [lopHocPhanDKHTDaDK]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+  return loading ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
+  ) : (
     <View style={{ flex: 1 }}>
-      <ScrollView style={{ paddingBottom: 20 }}>
+      <ScrollView
+        style={{ paddingBottom: 20 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <LinearGradient
           colors={["#65A5F6", "#3076F1"]}
           start={[0, 0.5]}
@@ -123,17 +98,28 @@ const RegisteredCourses = ({ navigation }) => {
           <View>
             <Text
               style={{
+                fontSize: 18,
+                color: "#fff",
+                fontWeight: "bold",
+                textAlign: "center",
+                paddingBottom: 5,
+              }}
+            >
+              Học kỳ: {hocKyTacNghiep.HocKy} - {hocKyTacNghiep.NamHoc}
+            </Text>
+            <Text
+              style={{
                 fontSize: 14,
                 color: "#fff",
               }}
             >
               - Số lớp đã đăng ký:{" "}
               <Text style={{ fontWeight: "bold" }}>
-                {listRegisteredCourses.length}
+                {lopHocPhanDKHTDaDK.length}
               </Text>{" "}
               (Duyệt:{" "}
               <Text style={{ fontWeight: "bold" }}>
-                {_.filter(listRegisteredCourses, ["duocDuyet", true]).length}
+                {_.filter(lopHocPhanDKHTDaDK, ["Duyet", true]).length}
               </Text>
               )
             </Text>
@@ -145,13 +131,13 @@ const RegisteredCourses = ({ navigation }) => {
             >
               - Tổng số tín chỉ đã đăng ký:{" "}
               <Text style={{ fontWeight: "bold" }}>
-                {_.sumBy(listRegisteredCourses, "soTC")}
+                {_.sumBy(lopHocPhanDKHTDaDK, "SoTinChi")}
               </Text>{" "}
               (Duyệt:{" "}
               <Text style={{ fontWeight: "bold" }}>
                 {_.sumBy(
-                  _.filter(listRegisteredCourses, ["duocDuyet", true]),
-                  "soTC"
+                  _.filter(lopHocPhanDKHTDaDK, ["Duyet", true]),
+                  "SoTinChi"
                 )}
               </Text>
               )
@@ -165,9 +151,7 @@ const RegisteredCourses = ({ navigation }) => {
               - Tổng học phí theo lớp đăng ký:{" "}
               <Text style={{ fontWeight: "bold" }}>
                 <I18nProvider>
-                  <NumberFormat
-                    value={_.sumBy(listRegisteredCourses, "hocPhi")}
-                  />
+                  <NumberFormat value={_.sumBy(lopHocPhanDKHTDaDK, "HocPhi")} />
                 </I18nProvider>
               </Text>{" "}
               (Duyệt:{" "}
@@ -175,8 +159,8 @@ const RegisteredCourses = ({ navigation }) => {
                 <I18nProvider>
                   <NumberFormat
                     value={_.sumBy(
-                      _.filter(listRegisteredCourses, ["duocDuyet", true]),
-                      "hocPhi"
+                      _.filter(lopHocPhanDKHTDaDK, ["Duyet", true]),
+                      "HocPhi"
                     )}
                   />
                 </I18nProvider>
@@ -186,7 +170,7 @@ const RegisteredCourses = ({ navigation }) => {
           </View>
         </LinearGradient>
 
-        {listRegisteredCourses.map((item, index) => {
+        {lopHocPhanDKHTDaDK.map((item, index) => {
           return (
             <TouchableOpacity
               key={index}
@@ -207,7 +191,14 @@ const RegisteredCourses = ({ navigation }) => {
                 shadowOpacity: 0.25,
                 shadowRadius: 3.84,
               }}
-              onPress={() => navigation.push("Course")}
+              onPress={() =>
+                navigation.navigate("Course", {
+                  MaLopHocPhan: item.MaLopHocPhan,
+                  TenLopHocPhan: item.TenLopHocPhan,
+                  MaHocTap: hocKyTacNghiep.MaHocTap,
+                  dataToken,
+                })
+              }
             >
               <View
                 style={{
@@ -240,33 +231,30 @@ const RegisteredCourses = ({ navigation }) => {
                 </View>
                 <View style={{ width: WIDTH * 0.7 }}>
                   <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                    {item.tenLHP}
+                    {item.TenLopHocPhan}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#808080" }}>
-                    {item.maLHP}
+                    {item.MaLopHocPhan}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Thời khóa biểu (Tuần đầu): {item.thoiKhoaBieu}
+                    Ngày bắt đầu: {getDateFormat(new Date(item.NgayBatDauTKB))}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Ngày bắt đầu: {item.ngayBatDau}
+                    Số TC: {item.SoTinChi} / Lần học: {item.LanHoc}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Số TC: {item.soTC} / Lần học: {item.lanHoc}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Giảng viên: {item.giangVien}
+                    Giảng viên: {item.GiangVien[item.GiangVien.length - 1]}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#808080" }}>
                     Học phí:{" "}
                     <I18nProvider>
-                      <NumberFormat value={item.hocPhi} />
+                      <NumberFormat value={item.HocPhi} />
                     </I18nProvider>
                   </Text>
                 </View>
               </View>
               <View>
-                {item.duocDuyet ? (
+                {item.Duyet ? (
                   <Text style={{ color: "#43BC0A", fontSize: 12 }}>
                     Đã duyệt{" "}
                     <FontAwesome name="check" size={12} color="#43BC0A" />
@@ -286,6 +274,29 @@ const RegisteredCourses = ({ navigation }) => {
   );
 };
 
+const mapStateToProps = (state) => {
+  return {
+    dataToken: state.dataToken,
+    hocKyTacNghiep: state.hocKyTacNghiep,
+    hoSoHocTap: state.hoSoHocTap,
+    nganhHocTacNghiep: state.nganhHocTacNghiep,
+    lopHocPhanDKHTDaDK: state.lopHocPhanDKHTDaDK,
+  };
+};
+
+const mapDispatchToProps = (dispatch, props) => {
+  return {
+    fetchStudentListLopHocPhanDKHTDaDK: (dataToken, hocKy) => {
+      dispatch(actFetchStudentListLopHocPhanDKHTDaDKRequest(dataToken, hocKy));
+    },
+  };
+};
+
+const RegisteredCoursesConnect = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(RegisteredCourses);
+
 const Stack = createStackNavigator();
 
 export default RegisteredCoursesStackScreen = ({ navigation }) => {
@@ -293,7 +304,7 @@ export default RegisteredCoursesStackScreen = ({ navigation }) => {
     <Stack.Navigator>
       <Stack.Screen
         name="RegisteredCourses"
-        component={RegisteredCourses}
+        component={RegisteredCoursesConnect}
         options={{
           headerTitleAlign: "center",
           title: "Học phần đã đăng ký",
@@ -309,11 +320,15 @@ export default RegisteredCoursesStackScreen = ({ navigation }) => {
       />
       <Stack.Screen
         name="Course"
-        component={Subject}
-        options={{
-          headerTitleAlign: "center",
-          title: "Thông tin Lớp học phần",
-        }}
+        component={Course}
+        options={({ route }) => ({
+          //headerShown: false,
+          title: route.params.TenLopHocPhan,
+          headerTitleAlign: "left",
+          headerTitleStyle: {
+            width: WIDTH - 100,
+          },
+        })}
       />
     </Stack.Navigator>
   );

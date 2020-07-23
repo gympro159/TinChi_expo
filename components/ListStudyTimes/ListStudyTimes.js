@@ -27,17 +27,14 @@ export default ListStudyTimes = ({
   lengthList,
   onPressCourse,
 }) => {
-
-  const [collapsed, setCollapsed] = useState(
-    index === lengthList - 1 ? true : false
-  );
+  const [collapsed, setCollapsed] = useState(true);
   const [dataRows, setDataRows] = useState([
     `${course.lanHoc}`,
-    `${course.diemQTHT===null?"":course.diemQTHT.toFixed(1)}`,
-    `${course.diemThi1===null?"":course.diemThi1.toFixed(1)}`,
-    `${course.tongDiem1===null?"":course.tongDiem1.toFixed(1)}`,
-    `${course.diemThi2===null?"":course.diemThi2.toFixed(1)}`,
-    `${course.tongDiem2===null?"":course.tongDiem2.toFixed(1)}`,
+    `${course.diemQTHT === null ? "" : course.diemQTHT.toFixed(1)}`,
+    `${course.diemThi1 === null ? "" : course.diemThi1.toFixed(1)}`,
+    `${course.tongDiem1 === null ? "" : course.tongDiem1.toFixed(1)}`,
+    `${course.diemThi2 === null ? "" : course.diemThi2.toFixed(1)}`,
+    `${course.tongDiem2 === null ? "" : course.tongDiem2.toFixed(1)}`,
   ]);
 
   return (
@@ -75,10 +72,13 @@ export default ListStudyTimes = ({
 const styles = StyleSheet.create({
   collapseContainer: {},
   header: {
-    backgroundColor: "#f2f2f2",
-    borderWidth: 1,
+    backgroundColor: "#EFF1F7",
+    borderWidth: 0.3,
+    borderColor: "#dbdbdb",
+    borderTopWidth: 0,
   },
   headerText: {
     fontSize: 15,
+    paddingLeft: 15
   },
 });

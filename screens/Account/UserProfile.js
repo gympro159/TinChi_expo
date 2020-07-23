@@ -141,39 +141,39 @@ const UserProfile = ({ navigation, studentProfile }) => {
 
 const EditProfile = ({ route }) => {
   var { studentProfile } = route.params;
-  const [maSinhVien, setMaSinhVien] = useState("");
-  const [hoVaTen, setHoVaTen] = useState("");
-  const [gioiTinh, setGioiTinh] = useState("");
-  const [ngaySinh, setNgaySinh] = useState("");
-  const [noiSinhQuocGia, setNoiSinhQuocGia] = useState("");
-  const [noiSinhTinhThanh, setNoiSinhTinhThanh] = useState("");
-  const [sinhVienNuocNgoai, setSinhVienNuocNgoai] = useState(true);
-  const [quocTich, setQuocTich] = useState("");
-  const [danToc, setDanToc] = useState("");
-  const [tonGiao, setTonGiao] = useState("");
-  const [soCMND, setSoCMND] = useState("");
-  const [ngayCapCMND, setNgayCapCMND] = useState("");
-  const [noiCapCMND, setNoiCapCMND] = useState("");
-  const [dienThoai, setDienThoai] = useState("");
-  const [diDong, setDiDong] = useState("");
-  const [email, setEmail] = useState("");
-  const [hinhThucCuTru, setHinhThucCuTru] = useState("");
-  const [kyTucXa, setKyTucXa] = useState("");
-  const [cuTruPhuongXa, setCuTruPhuongXa] = useState("");
-  const [cuTruQuanHuyen, setCuTruQuanHuyen] = useState("");
-  const [cuTruTinhThanh, setCuTruTinhThanh] = useState("");
-  const [cuTruQuocGia, setCuTruQuocGia] = useState("");
-  const [cuTruDiaChi, setCuTruDiaChi] = useState("");
-  const [queQuanPhuongXa, setQueQuanPhuongXa] = useState("");
-  const [queQuanQuanHuyen, setQueQuanQuanHuyen] = useState("");
-  const [queQuanTinhThanh, setQueQuanTinhThanh] = useState("");
-  const [queQuanQuocGia, setQueQuanQuocGia] = useState("");
-  const [queQuanDiaChi, setQueQuanDiaChi] = useState("");
-  const [thuongTruPhuongXa, setThuongTruPhuongXa] = useState("");
-  const [thuongTruQuanHuyen, setThuongTruQuanHuyen] = useState("");
-  const [thuongTruTinhThanh, setThuongTruTinhThanh] = useState("");
-  const [thuongTruQuocGia, setThuongTruQuocGia] = useState("");
-  const [thuongTruDiaChi, setThuongTruDiaChi] = useState("");
+  const [maSinhVien, setMaSinhVien] = useState(studentProfile.MaSinhVien);
+  const [hoVaTen, setHoVaTen] = useState(studentProfile.HoVaTen);
+  const [gioiTinh, setGioiTinh] = useState(studentProfile.GioiTinh);
+  const [ngaySinh, setNgaySinh] = useState(studentProfile.NgaySinh);
+  const [noiSinhQuocGia, setNoiSinhQuocGia] = useState(studentProfile.NoiSinh_QuocGia);
+  const [noiSinhTinhThanh, setNoiSinhTinhThanh] = useState(studentProfile.NoiSinh_TinhThanh);
+  const [sinhVienNuocNgoai, setSinhVienNuocNgoai] = useState(studentProfile.SinhVienNuocNgoai);
+  const [quocTich, setQuocTich] = useState(studentProfile.QuocTich);
+  const [danToc, setDanToc] = useState(studentProfile.DanToc);
+  const [tonGiao, setTonGiao] = useState(studentProfile.TonGiao);
+  const [soCMND, setSoCMND] = useState(studentProfile.SoCMND);
+  const [ngayCapCMND, setNgayCapCMND] = useState(studentProfile.NgayCapCMND);
+  const [noiCapCMND, setNoiCapCMND] = useState(studentProfile.NoiCapCMND);
+  const [dienThoai, setDienThoai] = useState(studentProfile.DienThoai);
+  const [diDong, setDiDong] = useState(studentProfile.DiDong);
+  const [email, setEmail] = useState(studentProfile.Email);
+  const [hinhThucCuTru, setHinhThucCuTru] = useState(studentProfile.CuTru_HinhThuc);
+  const [kyTucXa, setKyTucXa] = useState(studentProfile.CuTru_KyTucXa);
+  const [cuTruPhuongXa, setCuTruPhuongXa] = useState(studentProfile.CuTru_PhuongXa);
+  const [cuTruQuanHuyen, setCuTruQuanHuyen] = useState(studentProfile.CuTru_QuanHuyen);
+  const [cuTruTinhThanh, setCuTruTinhThanh] = useState(studentProfile.CuTru_TinhThanh);
+  const [cuTruQuocGia, setCuTruQuocGia] = useState(studentProfile.CuTru_QuocGia);
+  const [cuTruDiaChi, setCuTruDiaChi] = useState(studentProfile.CuTru_DiaChi);
+  const [queQuanPhuongXa, setQueQuanPhuongXa] = useState(studentProfile.QueQuan_PhuongXa);
+  const [queQuanQuanHuyen, setQueQuanQuanHuyen] = useState(studentProfile.QueQuan_QuanHuyen);
+  const [queQuanTinhThanh, setQueQuanTinhThanh] = useState(studentProfile.QueQuan_TinhThanh);
+  const [queQuanQuocGia, setQueQuanQuocGia] = useState(studentProfile.QueQuan_QuocGia);
+  const [queQuanDiaChi, setQueQuanDiaChi] = useState(studentProfile.QueQuan_DiaChi);
+  const [thuongTruPhuongXa, setThuongTruPhuongXa] = useState(studentProfile.TTru_PhuongXa);
+  const [thuongTruQuanHuyen, setThuongTruQuanHuyen] = useState(studentProfile.TTru_QuanHuyen);
+  const [thuongTruTinhThanh, setThuongTruTinhThanh] = useState(studentProfile.TTru_TinhThanh);
+  const [thuongTruQuocGia, setThuongTruQuocGia] = useState(studentProfile.TTru_QuocGia);
+  const [thuongTruDiaChi, setThuongTruDiaChi] = useState(studentProfile.TTru_DiaChi);
 
   const [tinhThanhVietNam, setTinhThanhVietNam] = useState([]);
   const [tinhThanhTrungQuoc, setTinhThanhTrungQuoc] = useState([]);
@@ -184,39 +184,6 @@ const EditProfile = ({ route }) => {
   const [phuongXaConLai, setPhuongXaConLai] = useState([]);
   
   useEffect(() => {
-    setMaSinhVien(studentProfile.MaSinhVien);
-    setHoVaTen(studentProfile.HoVaTen);
-    setGioiTinh(studentProfile.GioiTinh);
-    setNgaySinh(studentProfile.NgaySinh);
-    setNoiSinhQuocGia(studentProfile.NoiSinh_QuocGia);
-    setNoiSinhTinhThanh(studentProfile.NoiSinh_TinhThanh);
-    setSinhVienNuocNgoai(studentProfile.SinhVienNuocNgoai);
-    setQuocTich(studentProfile.QuocTich);
-    setDanToc(studentProfile.DanToc);
-    setTonGiao(studentProfile.TonGiao);
-    setSoCMND(studentProfile.SoCMND);
-    setNgayCapCMND(studentProfile.NgayCapCMND);
-    setNoiCapCMND(studentProfile.NoiCapCMND);
-    setDienThoai(studentProfile.DienThoai);
-    setDiDong(studentProfile.DiDong);
-    setEmail(studentProfile.Email);
-    setHinhThucCuTru(studentProfile.CuTru_HinhThuc);
-    setKyTucXa(studentProfile.CuTru_KyTucXa);
-    setCuTruPhuongXa(studentProfile.CuTru_PhuongXa);
-    setCuTruQuanHuyen(studentProfile.CuTru_QuanHuyen);
-    setCuTruTinhThanh(studentProfile.CuTru_TinhThanh);
-    setCuTruQuocGia(studentProfile.CuTru_QuocGia);
-    setCuTruDiaChi(studentProfile.CuTru_DiaChi);
-    setQueQuanPhuongXa(studentProfile.QueQuan_PhuongXa);
-    setQueQuanQuanHuyen(studentProfile.QueQuan_QuanHuyen);
-    setQueQuanTinhThanh(studentProfile.QueQuan_TinhThanh);
-    setQueQuanQuocGia(studentProfile.QueQuan_QuocGia);
-    setQueQuanDiaChi(studentProfile.QueQuan_DiaChi);
-    setThuongTruPhuongXa(studentProfile.TTru_PhuongXa);
-    setThuongTruQuanHuyen(studentProfile.TTru_QuanHuyen);
-    setThuongTruTinhThanh(studentProfile.TTru_TinhThanh);
-    setThuongTruQuocGia(studentProfile.TTru_QuocGia);
-    setThuongTruDiaChi(studentProfile.TTru_DiaChi);
     setTinhThanhVietNam([
       ["", "-------"],
       ["45", "Quảng Trị"],
@@ -760,11 +727,11 @@ const EditProfile = ({ route }) => {
                 style={{ height: 40, width: 200, borderWidth: 1 }}
                 onValueChange={(value) => setHinhThucCuTru(value)}
               >
-                <Picker.Item label="Ở nội trú" value={"Ở nội trú"} />
-                <Picker.Item label="Ở ngoại trú" value={"Ở ngoại trú"} />
+                <Picker.Item label="Ở nội trú" value="Ở nội trú" />
+                <Picker.Item label="Ở ngoại trú" value="Ở ngoại trú" />
                 <Picker.Item
                   label="Theo hộ khẩu thường trú"
-                  value={"Theo hộ khẩu thường trú"}
+                  value="Theo hộ khẩu thường trú"
                 />
               </Picker>
             </View>

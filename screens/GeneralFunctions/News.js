@@ -4,76 +4,117 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  StatusBar,
   Dimensions,
   TouchableOpacity,
   Image,
   ScrollView,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import HTMLView from "react-native-htmlview";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { createStackNavigator } from "@react-navigation/stack";
 import { connect } from "react-redux";
 import { FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { DrawerActions } from "@react-navigation/native";
-import Spinner from "react-native-loading-spinner-overlay";
 import Axios from "axios";
 import {
+  convertTime,
+  getDateFormat,
   getLocalDateFormat,
   getDateISOStringZoneTime,
 } from "./../../constants/common";
+import callApi from "./../../utils/apiCaller";
 import { actFetchStudentThoiKhoaBieuRequest } from "./../../actions/index";
 import ListNews from "./../../components/ListNews/ListNews";
 
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
-const Home = ({
-  navigation,
-  dataToken,
-  hocKyTacNghiep,
-  thoiKhoaBieu,
-  fetchThoiKhoaBieu,
-}) => {
+const Home = ({ navigation, dataToken, hocKyTacNghiep }) => {
   const [newsContent, setnewsContent] = useState([]);
   const [scheduleToday, setScheduleToday] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [check, setCheck] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   var listView = ["___", "___", "___", "___", "___", "___"];
 
-  useEffect(() => {
-    Promise.all([
-      Axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/news`),
-    ]).then(([resNews]) => {
-      var newsContentTemp = [];
-      for (let i = 0; i < 10; i++) {
-        newsContentTemp.push(resNews.data[resNews.data.length - 1 - i]);
-      }
-      setnewsContent(newsContentTemp);
-      setLoading(false);
-    });
-    if (hocKyTacNghiep.MaHocKy && !check) {
-      setCheck(1);
-      fetchThoiKhoaBieu(dataToken, hocKyTacNghiep.MaHocKy);
+  const fetchData = () => {
+    if (hocKyTacNghiep.MaHocKy) {
+      let date = getDateISOStringZoneTime(new Date())
+        .split("T")[0]
+        .split("-")
+        .reverse()
+        .join("-");
+      var header = {
+        "ums-application": dataToken.AppId,
+        "ums-time": convertTime(new Date()),
+        "ums-token": dataToken.Token,
+        "Content-Type": "application/json",
+      };
+      Promise.all([
+        callApi(`news-services/list-top-news?top=2`),
+        callApi(
+          `student-services/thoi-khoa-bieu?mahocky=${hocKyTacNghiep.MaHocKy}&tungay=${date}&denngay=${date}`,
+          "GET",
+          null,
+          header
+        ),
+      ])
+        .then(([resNews, resSchedule]) => {
+          setnewsContent(resNews.data.Data);
+          setRefreshing(false);
+          setLoading(false);
+          if (resSchedule.data.Code === 1) {
+            setScheduleToday(resSchedule.data.Data);
+          } else {
+            //Nếu hocKyTacNghiep thay đổi quá nhiều, thì fetch tkb sẽ gặp lỗi 401, nếu bị lỗi ta sẽ fetch lại 1 lần nữa
+            callApi(
+              `student-services/thoi-khoa-bieu?mahocky=${hocKyTacNghiep.MaHocKy}&tungay=${date}&denngay=${date}`,
+              "GET",
+              null,
+              header
+            ).then((res) => {
+              setScheduleToday(resSchedule.data.Data);
+            });
+          }
+        })
+        .catch((err) => console.log(err));
     }
-    let date = getDateISOStringZoneTime(new Date()),
-      scheduleTodayTemp = [];
-    thoiKhoaBieu.forEach((schedule) => {
-      if (schedule.NgayHoc === date) {
-        scheduleTodayTemp.push(schedule);
-      }
-    });
-    setScheduleToday(scheduleTodayTemp);
-  }, [thoiKhoaBieu]);
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData();
+  }, [hocKyTacNghiep]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
 
   return loading ? (
-    <Spinner
-      visible={loading}
-      textContent={"Đang tải..."}
-      textStyle={{ color: "#fff" }}
-    />
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
   ) : (
-    <SafeAreaProvider>
+    <ScrollView
+      style={{ backgroundColor: "#FFF" }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <LinearGradient
         colors={["#3076F1", "#FFF", "#EFF1F7"]}
         start={[0.5, 0]}
@@ -81,7 +122,9 @@ const Home = ({
         end={[0.5, 1]}
         style={{
           padding: 15,
+          paddingBottom: 0,
           alignItems: "center",
+          maxHeight: HEIGHT * 0.9,
         }}
       >
         <View style={{ width: WIDTH * 0.9, height: HEIGHT * 0.4 }}>
@@ -183,9 +226,7 @@ const Home = ({
             <TouchableOpacity
               style={{ paddingRight: 10 }}
               onPress={() => {
-                navigation.navigate("News", {
-                  newsContent,
-                });
+                navigation.push("News");
               }}
             >
               <Text style={{ color: "#3076F1", fontSize: 16 }}>Tất cả</Text>
@@ -203,9 +244,7 @@ const Home = ({
               style={{ width: WIDTH * 0.46 }}
               onPress={() => {
                 navigation.navigate("NewsContent", {
-                  news_Title: newsContent[0].title,
-                  news_Content: newsContent[0].content,
-                  news_Date: newsContent[0].date,
+                  newsId: newsContent[0].NewsId,
                 });
               }}
             >
@@ -220,17 +259,15 @@ const Home = ({
                 }}
               />
               <Text style={{ color: "#808080", fontSize: 12 }}>
-                {newsContent[0].date}
+                {getDateFormat(new Date(newsContent[0].CreatedTime))}
               </Text>
-              <Text numberOfLines={2}>{newsContent[0].title}</Text>
+              <Text numberOfLines={2}>{newsContent[0].Title}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={{ width: WIDTH * 0.46 }}
               onPress={() => {
                 navigation.navigate("NewsContent", {
-                  news_Title: newsContent[1].title,
-                  news_Content: newsContent[1].content,
-                  news_Date: newsContent[1].date,
+                  newsId: newsContent[1].NewsId,
                 });
               }}
             >
@@ -245,60 +282,138 @@ const Home = ({
                 }}
               />
               <Text style={{ color: "#808080", fontSize: 12 }}>
-                {newsContent[1].date}
+                {getDateFormat(new Date(newsContent[1].CreatedTime))}
               </Text>
-              <Text numberOfLines={2}>{newsContent[1].title}</Text>
+              <Text numberOfLines={2}>{newsContent[1].Title}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </LinearGradient>
-    </SafeAreaProvider>
+    </ScrollView>
   );
 };
 
-const News = ({ route, navigation }) => {
-  var { newsContent } = route.params;
+const News = ({ navigation }) => {
+  const [newsContent, setNewsContent] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [pageSize, setPageSize] = useState(10);
 
-  return (
+  const fetchData = () => {
+    callApi(`news-services/list-top-news?top=${pageSize}`)
+      .then((res) => {
+        setNewsContent(res.data.Data);
+        setRefreshing(false);
+        setLoading(false);
+      })
+      .catch((err) => console.log(err));
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [pageSize]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  const handleLoadMore = () => {
+    if (pageSize < 100) setPageSize(pageSize + 10);
+  };
+
+  return loading ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
+  ) : (
     <View style={{ backgroundColor: "#FFF" }}>
       <FlatList
         data={newsContent}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          pageSize < 100 ? (
+            <View style={{ alignItems: "center", marginTop: 10 }}>
+              <ActivityIndicator size="large" color="#3076F1" />
+            </View>
+          ) : (
+            <Text style={{ textAlign: "center", color: "#777" }}>
+              Không còn thông báo nào!
+            </Text>
+          )
+        }
         renderItem={({ item, index }) => (
           <ListNews
             news={item}
             index={index}
             onPress={() => {
               navigation.navigate("NewsContent", {
-                news_Title: item.title,
-                news_Content: item.content,
-                news_Date: item.date,
+                newsId: item.NewsId,
+                title: item.Title,
               });
             }}
           />
         )}
-        keyExtractor={(item) => `${item.date}`}
+        keyExtractor={(item) => `${item.ID}`}
         contentContainerStyle={styles.container}
       />
     </View>
   );
 };
 
-const NewsContent = ({ navigation, route }) => {
-  return (
+const NewsContent = ({ route }) => {
+  const [news, setNews] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    callApi(`news-services/get-news?id=${route.params.newsId}`).then((res) => {
+      setNews(res.data.Data);
+      setLoading(false);
+    });
+  }, []);
+
+  return loading ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
+  ) : (
     <ScrollView
       style={{ padding: 10, paddingTop: 0, backgroundColor: "#FFF", flex: 1 }}
     >
       <View style={{ borderBottomColor: "#000", borderBottomWidth: 1 }}>
         <Text style={styles.titleHeader}>Thông báo</Text>
       </View>
-      <Text style={{ fontWeight: "bold", fontSize: 17 }}>
-        {" "}
-        {route.params.news_Title}
-      </Text>
+      <Text style={{ fontWeight: "bold", fontSize: 17 }}> {news.Title}</Text>
       <Text style={{ fontSize: 13, paddingBottom: 10, color: "#777777" }}>
-        ({route.params.news_Date})
+        ({getDateFormat(new Date(news.CreatedTime))})
       </Text>
-      <Text> {route.params.news_Content}</Text>
+      <View
+        style={{
+          width: WIDTH,
+          borderBottomWidth: 0.5,
+          borderBottomColor: "#dbdbdb",
+        }}
+      ></View>
+      <View style={{ paddingVertical: 20 }}>
+        <HTMLView value={news.FullContent} />
+      </View>
     </ScrollView>
   );
 };
@@ -354,7 +469,7 @@ export default NewsStackScreen = ({ navigation, route }) => {
         name="NewsContent"
         component={NewsContent}
         options={({ route }) => ({
-          title: route.params.news_Title,
+          title: route.params.title,
           headerTitleAlign: "left",
           headerTitleStyle: {
             width: WIDTH - 100,
@@ -375,6 +490,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     padding: 10,
-    paddingBottom: 5
+    paddingBottom: 5,
   },
 });

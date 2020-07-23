@@ -11,7 +11,12 @@ import { FontAwesome } from "@expo/vector-icons";
 
 const WIDTH = Dimensions.get("window").width;
 
-export default ListRegisteredCourses = ({ subject, onPress, stt }) => {
+export default ListRegisteredCourses = ({
+  subject,
+  onPress,
+  stt,
+  check,
+}) => {
   return (
     <View
       style={{
@@ -62,24 +67,24 @@ export default ListRegisteredCourses = ({ subject, onPress, stt }) => {
         </View>
         <View style={{ width: WIDTH * 0.7 }}>
           <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-            {subject.tenHP}
+            {subject.TenHocPhan}
           </Text>
           <Text style={{ fontSize: 14, color: "#808080" }}>
-            {subject.maHP}{" "}
+            {subject.MaHocPhan}{" "}
           </Text>
           <Text style={{ fontSize: 14, color: "#808080" }}>
             Loại học phần:{" "}
             <Text style={{ fontWeight: "bold", color: "#000" }}>
-              {subject.tuChon ? "Tự chọn" : "Bắt buộc"}
+              {!subject.HocPhanBatBuoc ? "Tự chọn" : "Bắt buộc"}
             </Text>
           </Text>
           <Text style={{ fontSize: 14, color: "#808080" }}>
-            Số tín chỉ: {subject.soTinChi}
+            Số tín chỉ: {subject.SoTinChi}
           </Text>
           <Text style={{ fontSize: 14, color: "#808080" }}>
-            Số lớp mở đăng ký:{" "}
+            Số lớp học phần:{" "}
             <Text style={{ fontWeight: "bold", color: "#000" }}>
-              {subject.soLop}
+              {subject.SoLopHocPhan}
             </Text>
           </Text>
         </View>
@@ -88,24 +93,27 @@ export default ListRegisteredCourses = ({ subject, onPress, stt }) => {
         style={{
           width: WIDTH * 0.9,
           flexDirection: "row",
-          justifyContent: !subject.daDK ? "flex-end" : "space-between",
+          justifyContent: !check ? "flex-end" : "space-between",
+          // justifyContent: "flex-end",
           marginHorizontal: 10,
           marginTop: 10,
         }}
       >
-        {subject.daDK && (
+        {check && (
           <View>
             <Text style={{ color: "#43BC0A", fontSize: 15 }}>
               Đã đăng ký <FontAwesome name="check" size={15} color="#43BC0A" />
             </Text>
           </View>
         )}
-        <TouchableOpacity onPress={onPress}>
-          <Text style={{ color: "#3076F1" }}>
-            Danh sách lớp{" "}
-            <FontAwesome name="chevron-right" size={15} color="#3076F1" />
-          </Text>
-        </TouchableOpacity>
+        {subject.SoLopHocPhan > 0 && (
+          <TouchableOpacity onPress={onPress}>
+            <Text style={{ color: "#3076F1" }}>
+              Danh sách lớp{" "}
+              <FontAwesome name="chevron-right" size={15} color="#3076F1" />
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

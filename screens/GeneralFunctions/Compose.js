@@ -5,19 +5,22 @@ import {
   FlatList,
   Dimensions,
   TextInput,
+  Alert,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Text, Button, Badge } from "react-native-elements";
 import { connect } from "react-redux";
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
-import Spinner from "react-native-loading-spinner-overlay";
 import { changeAlias } from "./../../constants/common";
 import _ from "lodash";
 import { actFetchListTeachersRequest } from "./../../actions/index";
 
 const { width, height } = Dimensions.get("window");
+
+console.disableYellowBox = true;
 
 const Compose = ({ route, dataToken, listTeachers, fetchListTeachers }) => {
   const [loading, setLoading] = useState(true);
@@ -31,7 +34,30 @@ const Compose = ({ route, dataToken, listTeachers, fetchListTeachers }) => {
   const [listFilterPagination, setListFilterPagination] = useState([]);
   const [page, setPage] = useState(0);
   const [check, setCheck] = useState(0);
-  const pageSize = 18;
+  const pageSize = 10;
+
+  // useEffect(() => {
+  //   if (route.params) {
+  //     if (route.params.listNguoiNhan.length) {
+  //       setListNguoiNhan(route.params.listNguoiNhan);
+  //     }
+  //   }
+
+  //   axios
+  //     .get(`https://5ebb82caf2cfeb001697cd36.mockapi.io/school/listMember`)
+  //     .then((res) => {
+  //       if (Object.keys(dataToken).length && !check) {
+  //         setCheck(1);
+  //         if (listTeachers.length === 0) fetchListTeachers(dataToken);
+  //       }
+  //       setLoading(false);
+  //       if (listTeachers.length) {
+  //         let listThanhVienSchoolTemp = [...listTeachers, ...res.data];
+  //         setListThanhVienSchool(listThanhVienSchoolTemp);
+  //         setLoading(false);
+  //       }
+  //     });
+  // }, [listTeachers]);
 
   useEffect(() => {
     if (route.params) {
@@ -39,22 +65,14 @@ const Compose = ({ route, dataToken, listTeachers, fetchListTeachers }) => {
         setListNguoiNhan(route.params.listNguoiNhan);
       }
     }
-
     axios
       .get(`https://5ebb82caf2cfeb001697cd36.mockapi.io/school/listMember`)
       .then((res) => {
-        if (Object.keys(dataToken).length && !check) {
-          setCheck(1);
-          if (listTeachers.length === 0) fetchListTeachers(dataToken);
-        }
-
-        if (listTeachers.length) {
-          let listThanhVienSchoolTemp = [...listTeachers, ...res.data];
-          setListThanhVienSchool(listThanhVienSchoolTemp);
-          setLoading(false);
-        }
-      });
-  }, [listTeachers]);
+        setListThanhVienSchool(res.data);
+        setLoading(false);
+      })
+      .catch((err) => console.log(err));
+  }, []);
 
   const measureView = (event) => {
     setCustomHeight(event.nativeEvent.layout.height);
@@ -86,11 +104,16 @@ const Compose = ({ route, dataToken, listTeachers, fetchListTeachers }) => {
   };
 
   return loading ? (
-    <Spinner
-      visible={loading}
-      textContent={"Đang tải..."}
-      textStyle={{ color: "#fff" }}
-    />
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
   ) : (
     <View style={{ backgroundColor: "#FFF", flex: 1 }}>
       <ScrollView>
@@ -130,7 +153,11 @@ const Compose = ({ route, dataToken, listTeachers, fetchListTeachers }) => {
                       setListNguoiNhan(listNguoiNhanTemp);
                     }}
                   >
-                    <Text>{item.name || item.FullName} </Text>
+                    <Text>
+                      {item.name ||
+                        item.FullName ||
+                        `${item.HoDem} ${item.Ten}`}{" "}
+                    </Text>
                     <FontAwesome name="close" size={14} color="#777" />
                   </TouchableOpacity>
                 );
@@ -193,14 +220,26 @@ const Compose = ({ route, dataToken, listTeachers, fetchListTeachers }) => {
                     }}
                   >
                     <Text style={{ fontSize: 17, color: "grey" }}>
-                      {item.maSV || item.UserName} -{" "}
-                      {item.name || item.FullName}
+                      {item.maSV || item.UserName || item.MaSinhVien} -{" "}
+                      {item.name ||
+                        item.FullName ||
+                        `${item.HoDem} ${item.Ten}`}
                     </Text>
                   </TouchableOpacity>
                 </View>
               )}
-              onEndReached={handleLoadMore}
+              onEndReached={
+                listFilterPagination.length !== listFilter.length &&
+                handleLoadMore
+              }
               onEndReachedThreshold={0.5}
+              ListFooterComponent={
+                listFilterPagination.length !== listFilter.length && (
+                  <View style={{ alignItems: "center", marginTop: 10 }}>
+                    <ActivityIndicator size="small" color="grey" />
+                  </View>
+                )
+              }
               keyExtractor={(item, index) => index.toString()}
             />
           </View>
@@ -237,7 +276,36 @@ const Compose = ({ route, dataToken, listTeachers, fetchListTeachers }) => {
         </View>
       </ScrollView>
       <TouchableOpacity
-        onPress={() => console.log("haha")}
+        onPress={() => {
+          if (listNguoiNhan && chuDe && noiDung) {
+            Alert.alert(
+              "Thông báo",
+              `Gửi tin nhắn thành công!`,
+              [
+                {
+                  text: "OK",
+                  style: "cancel",
+                },
+              ],
+              { cancelable: false }
+            );
+            setListNguoiNhan([]);
+            setChuDe("");
+            setNoiDung("");
+          } else {
+            Alert.alert(
+              "Thông báo",
+              `Vui lòng nhập đầy đủ thông tin!`,
+              [
+                {
+                  text: "OK",
+                  style: "cancel",
+                },
+              ],
+              { cancelable: false }
+            );
+          }
+        }}
         style={{
           position: "absolute",
           justifyContent: "center",

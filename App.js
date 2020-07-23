@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { createStore, applyMiddleware } from "redux";
-import appReducers from "./reducers/index";
+import rootReducer from "./reducers/index";
 import { Provider } from "react-redux";
 import thunk from "redux-thunk";
 import AppNavigator from "./AppNavigator";
 import Loading from "./screens/Loading";
 
 const store = createStore(
-  appReducers, 
+  rootReducer, 
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
   applyMiddleware(thunk));
 

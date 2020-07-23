@@ -7,7 +7,7 @@ import { DrawerActions } from "@react-navigation/native";
 const Payment = () => {
   return (
     <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
-      <Text style={{ fontWeight: "bold", fontSize: 17 }}>
+      <Text style={{ fontWeight: "bold", fontSize: 17, textAlign: "center"}}>
         Chức năng này đang phát triển!
       </Text>
     </View>

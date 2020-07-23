@@ -8,281 +8,402 @@ import {
   FlatList,
   Alert,
   Picker,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
-import { Input, Button, Text } from "react-native-elements";
+import { Text } from "react-native-elements";
 import { createStackNavigator } from "@react-navigation/stack";
+import { connect } from "react-redux";
 import { FontAwesome } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { DrawerActions } from "@react-navigation/native";
-import {
-  Table,
-  TableWrapper,
-  Row,
-  Rows,
-  Col,
-} from "react-native-table-component";
-import Spinner from "react-native-loading-spinner-overlay";
-import axios from "axios";
 import _ from "lodash";
 import "intl";
 import "intl/locale-data/jsonp/en";
 import { NumberFormat, I18nProvider } from "@lingui/react";
+import {
+  actFetchStudentListHocPhanHocKyRequest,
+  actFetchStudentListLopHocPhanDKHTDaDKRequest,
+} from "./../../actions/index";
+import callApi from "./../../utils/apiCaller";
+import { convertTime, getDateFormat } from "./../../constants/common";
 import Course from "./../Course/Course";
 import Subject from "./../Subject/Subject";
 import Compose from "./../GeneralFunctions/Compose";
 import ListRegisterSubject from "./../../components/ListRegisterSubjects/ListRegesterSubjects";
-import ListRegisterCourses from "./../../components/ListRegisterCourses/ListRegisterCourses";
 
 const WIDTH = Dimensions.get("window").width;
 
-const Modules = ({ navigation }) => {
+const Modules = ({
+  navigation,
+  dataToken,
+  hocKyTacNghiep,
+  hoSoHocTap,
+  hocPhanDKHT,
+  lopHocPhanDKHTDaDK,
+  fetchStudentListHocPhanHocKy,
+  fetchStudentListLopHocPhanDKHTDaDK,
+}) => {
   const [selectedValue, setSelectedValue] = useState(0);
   const [subjects, setSubjects] = useState([]);
   const [subjectsInSemester, setSubjectsInSemester] = useState([]);
-  const [subjectsNgoaiKhoa, setSubjectsNgoaiKhoa] = useState([]);
+  const [subjectsRender, setSubjectsRender] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [displayNone, setDisplayNone] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
+  const [displayNone, setDisplayNone] = useState(false);
+  const [nganhHocTacNghiep, setNganhHocTacNghiep] = useState({});
+  const [pageSize, setPageSize] = useState(10);
+  const [demFetch, setDemFetch] = useState(0);
+  const fetchData = () => {
+    let nganhHocTacNghiepTemp = {};
+    if (
+      Object.keys(hoSoHocTap).length > 0 &&
+      Object.keys(hocKyTacNghiep).length > 0
+    ) {
+      for (let hoSo of hoSoHocTap.HoSoNhapHoc) {
+        if (hoSo.MaHocTap === hocKyTacNghiep.MaHocTap) {
+          for (let quaTrinh of hoSo.QuaTrinhHocTap) {
+            if (quaTrinh.MaHocKy === hocKyTacNghiep.MaHocKy) {
+              nganhHocTacNghiepTemp = { ...quaTrinh };
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+    if (
+      Object.keys(nganhHocTacNghiepTemp).length > 0 &&
+      Object.keys(dataToken).length > 0
+    ) {
+      setNganhHocTacNghiep(nganhHocTacNghiepTemp);
+      fetchStudentListHocPhanHocKy(dataToken, nganhHocTacNghiepTemp);
+      fetchStudentListLopHocPhanDKHTDaDK(
+        dataToken,
+        nganhHocTacNghiepTemp.MaHocKy
+      );
+    }
+  };
 
   useEffect(() => {
-    axios
-      .get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/subject`)
-      .then((res) => {
-        setSubjects(res.data);
-        let subjectsInSemesterTemp = [],
-          subjectsNgoaiKhoaTemp = [];
-        res.data.forEach((subject) => {
-          if (subject.hocKy === 2 && subject.namHoc === "2016-2017") {
-            if (!subject.ngoaiKhoa) {
-              subjectsInSemesterTemp.push(subject);
-            } else subjectsNgoaiKhoaTemp.push(subject);
-          }
-        });
-        setSubjectsInSemester(subjectsInSemesterTemp);
-        setSubjectsNgoaiKhoa(subjectsNgoaiKhoaTemp);
-        setLoading(false);
-      });
-  }, []);
+    setLoading(true);
+    fetchData();
+  }, [hocKyTacNghiep]);
+
+  useEffect(() => {
+    if (demFetch === 2) setDemFetch(0);
+    //Mỗi lần hocKyTacNghiep thay đổi thì hàm này chạy 3 lần(demFetch=2) => setState vào lần chạy thứ 3
+    else setDemFetch(demFetch + 1);
+    if (refreshing && demFetch === 1) setDemFetch(0); //Mỗi lần refreshing thì hàm này chạy 2 lần (demFetch=1)
+    // if (Object.keys(hocPhanDKHT).length > 0 && lopHocPhanDKHTDaDK.length > 0) {
+    if (demFetch >= 2 || (demFetch === 1 && refreshing)) {
+      setSubjects(hocPhanDKHT.DanhSachHocPhanNgoaiKeHoach);
+      setSubjectsInSemester(hocPhanDKHT.DanhSachHocPhanTrongKeHoach);
+      setSubjectsRender(
+        selectedValue === 0
+          ? hocPhanDKHT.DanhSachHocPhanTrongKeHoach.slice(0, 10)
+          : hocPhanDKHT.DanhSachHocPhanNgoaiKeHoach.slice(0, 10)
+      );
+      //setDemFetch(0);
+      setPageSize(10);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [hocPhanDKHT, lopHocPhanDKHTDaDK]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  const handleLoadMore = () => {
+    setSubjectsRender(
+      selectedValue === 0
+        ? [
+            ...subjectsRender,
+            ...subjectsInSemester.slice(pageSize, pageSize + 10),
+          ]
+        : [...subjectsRender, ...subjects.slice(pageSize, pageSize + 10)]
+    );
+    setPageSize(pageSize + 10);
+  };
+
+  const handleCheckDKHP = (subject, lopHocPhanDKHTDaDK) => {
+    let check = false;
+    for (let item of lopHocPhanDKHTDaDK) {
+      if (item.MaHocPhan === subject.MaHocPhan) {
+        check = true;
+        break;
+      }
+    }
+    return check;
+  };
 
   return loading ? (
-    <Spinner
-      visible={loading}
-      textContent={"Đang tải..."}
-      textStyle={{ color: "#fff" }}
-    />
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
   ) : (
     <View style={styles.container}>
-      <ScrollView>
-        <View
-          style={{ borderBottomWidth: 0.5, width: WIDTH, marginBottom: 10 }}
-        >
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "bold",
-              color: "#3076F1",
-              marginHorizontal: 10,
-            }}
-          >
-            Danh sách học phần{"\n"}Học kỳ 2 - Năm học 2016-2017
-          </Text>
-        </View>
-        <View
+      <View style={{ borderBottomWidth: 0.5, width: WIDTH, marginBottom: 10 }}>
+        <Text
           style={{
+            fontSize: 20,
+            fontWeight: "bold",
+            color: "#3076F1",
             marginHorizontal: 10,
-            backgroundColor: "#D9EDF7",
-            padding: 10,
-            paddingTop: 5,
-            borderRadius: 10,
-            alignItems: "flex-end",
-            display: displayNone? "none": "flex"
           }}
         >
-          <TouchableOpacity onPress={()=>setDisplayNone(true)}>
-            <FontAwesome name="close" size={15} color="#3a87ad"/>
-          </TouchableOpacity>
-          <Text style={{ color: "#3a87ad" }}>
-            <Text style={{ fontWeight: "bold" }}>Sinh viên lưu ý:</Text> Ưu tiên
-            chọn và đăng ký học các học phần theo kế hoạch đào tạo của
-            khóa/ngành, đăng ký học đầy đủ các học phần bắt buộc trong kế hoạch
-            đào tạo.
-          </Text>
-        </View>
-        <View
-          style={{
-            borderWidth: 1,
-            borderRadius: 6,
-            borderColor: "#dbdbdb",
-            backgroundColor: "#fff",
-            marginHorizontal: 10,
-            marginVertical: 10,
+          Danh sách học phần{"\n"}Học kỳ{" "}
+          {nganhHocTacNghiep.MaHocKy.split(".")[1] === "3"
+            ? "hè"
+            : nganhHocTacNghiep.MaHocKy.split(".")[1]}{" "}
+          - {nganhHocTacNghiep.MaHocKy.split(".")[0]}
+        </Text>
+      </View>
+      <View
+        style={{
+          marginHorizontal: 10,
+          backgroundColor: "#D9EDF7",
+          padding: 10,
+          paddingTop: 5,
+          borderRadius: 10,
+          alignItems: "flex-end",
+          display: displayNone ? "none" : "flex",
+        }}
+      >
+        <TouchableOpacity onPress={() => setDisplayNone(true)}>
+          <FontAwesome name="close" size={15} color="#3a87ad" />
+        </TouchableOpacity>
+        <Text style={{ color: "#3a87ad" }}>
+          <Text style={{ fontWeight: "bold" }}>Sinh viên lưu ý:</Text> Ưu tiên
+          chọn và đăng ký học các học phần theo kế hoạch đào tạo của khóa/ngành,
+          đăng ký học đầy đủ các học phần bắt buộc trong kế hoạch đào tạo.
+        </Text>
+      </View>
+      <View
+        style={{
+          borderWidth: 1,
+          borderRadius: 6,
+          borderColor: "#dbdbdb",
+          backgroundColor: "#fff",
+          marginHorizontal: 10,
+          marginVertical: 10,
+        }}
+      >
+        <Picker
+          selectedValue={selectedValue}
+          style={{ height: 40, width: undefined }}
+          onValueChange={(value) => {
+            setSelectedValue(value);
+            if (value === 0) {
+              setSubjectsRender(subjectsInSemester.slice(0, 10));
+              setPageSize(10);
+            } else {
+              setSubjectsRender(subjects.slice(0, 10));
+              setPageSize(10);
+            }
           }}
+          mode="dropdown"
         >
-          <Picker
-            selectedValue={selectedValue}
-            style={{ height: 40, width: undefined }}
-            onValueChange={(value) => setSelectedValue(value)}
-            mode="dropdown"
-          >
-            <Picker.Item label="Theo kế hoạch đào tạo" value={0} />
-            <Picker.Item label="Theo chương trình đào tạo" value={1} />
-            <Picker.Item label="Các học phần ngoại khóa" value={2} />
-          </Picker>
-        </View>
+          <Picker.Item label="Theo kế hoạch đào tạo" value={0} />
+          <Picker.Item label="Theo chương trình đào tạo" value={1} />
+        </Picker>
+      </View>
 
-        {selectedValue === 0 ? (
-          subjectsInSemester.length === 0 ? (
-            <Text
-              style={{
-                textAlign: "center",
-                fontWeight: "bold",
-                fontSize: 16,
-                marginVertical: 200,
+      {subjectsRender.length === 0 ? (
+        <Text
+          style={{
+            textAlign: "center",
+            fontWeight: "bold",
+            fontSize: 16,
+            marginVertical: 200,
+          }}
+        >
+          Hiện tại chưa tổ chức học phần nào!
+        </Text>
+      ) : (
+        <FlatList
+          data={subjectsRender}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onEndReached={
+            ((selectedValue === 0 && pageSize < subjectsInSemester.length) ||
+              (selectedValue === 1 && pageSize < subjects.length)) &&
+            handleLoadMore
+          }
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            ((selectedValue === 0 && pageSize < subjectsInSemester.length) ||
+              (selectedValue === 1 && pageSize < subjects.length)) && (
+              <View style={{ alignItems: "center", marginTop: 10 }}>
+                <ActivityIndicator size="large" color="#3076F1" />
+              </View>
+            )
+          }
+          renderItem={({ item, index }) => (
+            <ListRegisterSubject
+              key={index}
+              stt={index + 1}
+              check={handleCheckDKHP(item, lopHocPhanDKHTDaDK)}
+              subject={item}
+              onPress={() => {
+                navigation.navigate("RegisterCourses", {
+                  nganhHocTacNghiep,
+                  subject: item,
+                  trongKeHoach:
+                    _.differenceWith(subjectsInSemester, [item], _.isEqual)
+                      .length !== subjectsInSemester.length
+                      ? true
+                      : false,
+                });
               }}
-            >
-              Hiện tại chưa tổ chức học phần nào!
-            </Text>
-          ) : (
-            subjectsInSemester.map((subject, index) => {
-              return (
-                <ListRegisterSubject
-                  key={index}
-                  stt={index + 1}
-                  subject={subject}
-                  onPress={() => {
-                    navigation.navigate("RegisterCourses", {
-                      maLHPDangKy: subject.daDK,
-                      maHP: subject.maHP,
-                    });
-                  }}
-                />
-              );
-            })
-          )
-        ) : selectedValue === 2 ? (
-          subjectsNgoaiKhoa.length === 0 ? (
-            <Text
-              style={{
-                textAlign: "center",
-                fontWeight: "bold",
-                fontSize: 16,
-                marginVertical: 200,
-              }}
-            >
-              Hiện tại chưa tổ chức học phần{"\n"} ngoại khóa nào!
-            </Text>
-          ) : (
-            subjectsNgoaiKhoa.map((subject, index) => {
-              return (
-                <ListRegisterSubject
-                  key={index}
-                  stt={index + 1}
-                  subject={subject}
-                  onPress={() => {
-                    navigation.navigate("RegisterCourses", {
-                      maLHPDangKy: subject.daDK,
-                      maHP: subject.maHP,
-                    });
-                  }}
-                />
-              );
-            })
-          )
-        ) : (
-          subjects.map((subject, index) => {
-            return (
-              <ListRegisterSubject
-                key={index}
-                stt={index + 1}
-                subject={subject}
-                onPress={() => {
-                  navigation.navigate("RegisterCourses", {
-                    maLHPDangKy: subject.daDK,
-                    maHP: subject.maHP,
-                  });
-                }}
-              />
-            );
-          })
-        )}
-      </ScrollView>
+            />
+          )}
+          keyExtractor={(item, index) => `${index}`}
+        />
+      )}
     </View>
   );
 };
 
-const RegisterCourses = ({ route, navigation }) => {
-  const [subject, setSubject] = useState({});
+const RegisterCourses = ({
+  route,
+  navigation,
+  dataToken,
+  hocKyTacNghiep,
+  lopHocPhanDKHTDaDK,
+  fetchStudentListLopHocPhanDKHTDaDK,
+}) => {
   const [courses, setCourses] = useState([]);
-  const [courseRegister, setCourseRegister] = useState({});
+  const [courseRegistered, setCourseRegistered] = useState({});
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    Promise.all([
-      axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/subject`),
-      axios.get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/course`),
-    ])
-      .then(([subjectRes, courseRes]) => {
-        for (let sub of subjectRes.data) {
-          if (sub.maHP === route.params.maHP) {
-            setSubject(sub);
-            let listCourse = [];
-            courseRes.data.forEach((course) => {
-              if (
-                course.maHP === sub.maHP &&
-                course.maLHP === route.params.maLHPDangKy
-              ) {
-                setCourseRegister(course);
+  const [refreshing, setRefreshing] = useState(false);
+  var { subject, nganhHocTacNghiep, trongKeHoach } = route.params;
+  const fetchData = () => {
+    if (Object.keys(nganhHocTacNghiep).length > 0) {
+      var header = {
+        "ums-application": dataToken.AppId,
+        "ums-time": convertTime(new Date()),
+        "ums-token": dataToken.Token,
+        "Content-Type": "application/json",
+      };
+      callApi(
+        `student-services/danh-sach-lop-hoc-phan?mahocky=${nganhHocTacNghiep.MaHocKy}&mahocphan=${subject.MaHocPhan}&makhoahoc=${nganhHocTacNghiep.MaKhoaHoc}&manganh=${nganhHocTacNghiep.MaNganh}&trongkehoach=${trongKeHoach}`,
+        "GET",
+        null,
+        header
+      )
+        .then((res) => {
+          var coursesTemp = [...res.data.Data];
+          if (trongKeHoach) {
+            callApi(
+              `student-services/danh-sach-lop-hoc-phan?mahocky=${
+                nganhHocTacNghiep.MaHocKy
+              }&mahocphan=${subject.MaHocPhan}&makhoahoc=${
+                nganhHocTacNghiep.MaKhoaHoc
+              }&manganh=${nganhHocTacNghiep.MaNganh}&trongkehoach=${false}`,
+              "GET",
+              null,
+              header
+            ).then((res2) => {
+              setCourses([...coursesTemp, ...res2.data.Data]);
+              setCourseRegistered({});
+              for (let item of lopHocPhanDKHTDaDK) {
+                if (item.MaHocPhan === subject.MaHocPhan) {
+                  setCourseRegistered(item);
+                  break;
+                }
               }
-              if (course.maHP === sub.maHP) {
-                listCourse.push(course);
-              }
+              setLoading(false);
+              setRefreshing(false);
             });
-            setCourses(listCourse);
-            break;
+          } else {
+            setCourses(coursesTemp);
+            setCourseRegistered({});
+            for (let item of lopHocPhanDKHTDaDK) {
+              if (item.MaHocPhan === subject.MaHocPhan) {
+                setCourseRegistered(item);
+                break;
+              }
+            }
+            setLoading(false);
+            setRefreshing(false);
           }
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
+        })
+        .catch((err) => {
+          console.log(err);
+          setRefreshing(false);
+        });
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [lopHocPhanDKHTDaDK]);
 
   return loading ? (
-    <Spinner
-      visible={loading}
-      textContent={"Đang tải..."}
-      textStyle={{ color: "#fff" }}
-    />
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
   ) : (
     <View style={{ flex: 1, marginTop: 0, backgroundColor: "#FFF" }}>
-      <ScrollView style={{ marginBottom: 10 }}>
+      <ScrollView
+        style={{ marginBottom: 10 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={{ paddingTop: 20 }}>
           <View style={styles.content}>
             <Text style={styles.label}>Tên học phần: </Text>
-            <Text style={styles.input}>{subject.tenHP}</Text>
+            <Text style={styles.input}>{subject.TenHocPhan}</Text>
           </View>
           <View style={styles.content}>
             <Text style={styles.label}>Mã học phần: </Text>
-            <Text style={styles.input}>{subject.maHP}</Text>
+            <Text style={styles.input}>{subject.MaHocPhan}</Text>
           </View>
           <View style={styles.content}>
             <Text style={styles.label}>Số tín chỉ: </Text>
-            <Text style={styles.input}>{subject.soTinChi}</Text>
+            <Text style={styles.input}>{subject.SoTinChi}</Text>
           </View>
-          {Object.keys(courseRegister).length !== 0 && (
+          {Object.keys(courseRegistered).length > 0 && (
             <>
               <View style={styles.content}>
                 <Text style={styles.label}>Lớp đã đăng ký: </Text>
-                <Text style={styles.input}>{courseRegister.tenLHP}</Text>
+                <Text style={styles.input}>
+                  {courseRegistered.TenLopHocPhan}
+                </Text>
               </View>
               <View style={styles.content}>
                 <Text style={styles.label}>Thời điểm đăng ký: </Text>
                 <Text style={styles.input}>
-                  {courseRegister.thoiDiemDangKy}
+                  {getDateFormat(new Date(courseRegistered.NgayDangKy))}
                 </Text>
               </View>
               <View style={styles.content}>
                 <Text style={styles.label}>Trạng thái xử lý: </Text>
-                <Text style={styles.input}>{courseRegister.trangThaiXyLy}</Text>
+                <Text style={styles.input}>
+                  {courseRegistered.Duyet ? "Đã duyệt" : "Chưa duyệt"}
+                </Text>
               </View>
             </>
           )}
@@ -351,35 +472,27 @@ const RegisterCourses = ({ route, navigation }) => {
                 </View>
                 <View style={{ width: WIDTH * 0.7 }}>
                   <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                    {item.tenLHP}
+                    {item.TenLopHocPhan}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#808080" }}>
-                    {item.maLHP}{" "}
+                    {item.MaLopHocPhan}{" "}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#808080" }}>
                     Số SV (ĐK/TT/TĐ):{" "}
                     <Text style={{ fontWeight: "bold", color: "#000" }}>
-                      {item.svDaDangKy}
+                      {item.SoSinhVienDangKy}
                     </Text>
-                    /{subject.soSVToiThieu}/{subject.soSVToiDa}
+                    /{item.SoSinhVienToiThieu}/{item.SoSinhVienToiDa}
                   </Text>
-                  <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Thời khóa biểu (Tuần đầu): {item.thoiKhoaBieu}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Thời gian học: {item.thoiGianHocTheoTKB}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: "#808080" }}>
+                  {/* <Text style={{ fontSize: 14, color: "#808080" }}>
                     Lần học: {item.lanHoc} / Học phí:{" "}
                     <I18nProvider>
                       <NumberFormat value={item.hocPhi} />
                     </I18nProvider>
-                  </Text>
+                  </Text> */}
                   <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Giảng viên: {item.giangVien}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: "#808080" }}>
-                    Ngày hết hạn đăng ký: {item.ngayHetHanDK}
+                    Ngày hết hạn đăng ký:{" "}
+                    {getDateFormat(new Date(item.NgayHetHanDangKy))}
                   </Text>
                 </View>
               </View>
@@ -388,21 +501,89 @@ const RegisterCourses = ({ route, navigation }) => {
                   width: WIDTH * 0.9,
                   flexDirection: "row",
                   justifyContent:
-                    subject.daDK && item.trangThaiXyLy !== "Chưa được duyệt"
+                    (Object.keys(courseRegistered).length > 0 &&
+                      (courseRegistered.Duyet ||
+                        (!courseRegistered.Duyet &&
+                          courseRegistered.MaLopHocPhan !==
+                            item.MaLopHocPhan))) ||
+                    (Object.keys(courseRegistered).length === 0 &&
+                      (item.SoSinhVienDangKy >= item.SoSinhVienToiDa ||
+                        !item.ChoPhepDangKy ||
+                        item.TrangThai !== 1 ||
+                        new Date(item.NgayHetHanDangKy).getTime() -
+                          new Date().getTime() <=
+                          0))
                       ? "flex-end"
                       : "space-between",
                   marginHorizontal: 10,
                   marginVertical: 10,
                 }}
               >
-                {!subject.daDK ? (
+                {Object.keys(courseRegistered).length === 0 &&
+                item.TrangThai === 1 &&
+                item.ChoPhepDangKy &&
+                item.SoSinhVienDangKy < item.SoSinhVienToiDa &&
+                new Date(item.NgayHetHanDangKy).getTime() -
+                  new Date().getTime() >
+                  0 ? (
                   <TouchableOpacity
                     onPress={() =>
                       Alert.alert(
                         "Xác nhận",
                         "Bạn xác nhận muốn đăng ký lớp học phần này?",
                         [
-                          { text: "Đồng ý", style: "cancel" },
+                          {
+                            text: "Đồng ý",
+                            onPress: () => {
+                              var header = {
+                                "ums-application": dataToken.AppId,
+                                "ums-time": convertTime(new Date()),
+                                "ums-token": dataToken.Token,
+                                "Content-Type": "application/json",
+                              };
+                              callApi(
+                                `student-services/dang-ky-lop-hoc-phan?malophocphan=${item.MaLopHocPhan}&mahoctap=${hocKyTacNghiep.MaHocTap}&mahocky=${hocKyTacNghiep.MaHocKy}`,
+                                "POST",
+                                null,
+                                header
+                              )
+                                .then((res) => {
+                                  if (res.data.Code === 1) {
+                                    setLoading(true);
+                                    fetchStudentListLopHocPhanDKHTDaDK(
+                                      dataToken,
+                                      nganhHocTacNghiep.MaHocKy
+                                    );
+                                    Alert.alert(
+                                      "Thông báo",
+                                      `${res.data.Data}!`,
+                                      [
+                                        {
+                                          text: "OK",
+                                          style: "cancel",
+                                        },
+                                      ],
+                                      { cancelable: false }
+                                    );
+                                  } else {
+                                    Alert.alert(
+                                      "Thông báo",
+                                      `${res.data.Msg}!`,
+                                      [
+                                        {
+                                          text: "OK",
+                                          style: "cancel",
+                                        },
+                                      ],
+                                      { cancelable: false }
+                                    );
+                                  }
+                                })
+                                .catch((err) => {
+                                  console.log(err);
+                                });
+                            },
+                          },
                           {
                             text: "Không",
                             style: "cancel",
@@ -412,7 +593,7 @@ const RegisterCourses = ({ route, navigation }) => {
                       )
                     }
                   >
-                    <Text style={{ color: "#3076F1", fontSize: 15 }}>
+                    <Text style={{ color: "#3076F1", fontSize: 16 }}>
                       Ghi danh{" "}
                       <FontAwesome
                         name="pencil-square-o"
@@ -422,14 +603,67 @@ const RegisterCourses = ({ route, navigation }) => {
                     </Text>
                   </TouchableOpacity>
                 ) : (
-                  item.trangThaiXyLy === "Chưa được duyệt" && (
+                  Object.keys(courseRegistered).length > 0 &&
+                  !courseRegistered.Duyet &&
+                  courseRegistered.MaLopHocPhan === item.MaLopHocPhan && (
                     <TouchableOpacity
                       onPress={() => {
                         Alert.alert(
                           "Xác nhận",
                           "Bạn xác nhận muốn hủy lớp học phần này?",
                           [
-                            { text: "Đồng ý", style: "cancel" },
+                            {
+                              text: "Đồng ý",
+                              onPress: () => {
+                                var header = {
+                                  "ums-application": dataToken.AppId,
+                                  "ums-time": convertTime(new Date()),
+                                  "ums-token": dataToken.Token,
+                                  "Content-Type": "application/json",
+                                };
+                                callApi(
+                                  `student-services/huy-dang-ky-lop-hoc-phan?malophocphan=${item.MaLopHocPhan}&mahoctap=${hocKyTacNghiep.MaHocTap}&mahocky=${hocKyTacNghiep.MaHocKy}`,
+                                  "POST",
+                                  null,
+                                  header
+                                )
+                                  .then((res) => {
+                                    if (res.data.Code === 1) {
+                                      setLoading(true);
+                                      fetchStudentListLopHocPhanDKHTDaDK(
+                                        dataToken,
+                                        nganhHocTacNghiep.MaHocKy
+                                      );
+                                      Alert.alert(
+                                        "Thông báo",
+                                        `${res.data.Data}!`,
+                                        [
+                                          {
+                                            text: "OK",
+                                            style: "cancel",
+                                          },
+                                        ],
+                                        { cancelable: false }
+                                      );
+                                    } else {
+                                      Alert.alert(
+                                        "Thông báo",
+                                        `${res.data.Msg}!`,
+                                        [
+                                          {
+                                            text: "OK",
+                                            style: "cancel",
+                                          },
+                                        ],
+                                        { cancelable: false }
+                                      );
+                                    }
+                                  })
+                                  .catch((err) => {
+                                    console.log(err);
+                                  });
+                              },
+                            },
                             {
                               text: "Không",
                               style: "cancel",
@@ -439,7 +673,7 @@ const RegisterCourses = ({ route, navigation }) => {
                         );
                       }}
                     >
-                      <Text style={{ color: "#EF2323", fontSize: 15 }}>
+                      <Text style={{ color: "#EF2323", fontSize: 16 }}>
                         Hủy Lớp{" "}
                         <FontAwesome name="close" size={15} color="#EF2323" />
                       </Text>
@@ -449,12 +683,14 @@ const RegisterCourses = ({ route, navigation }) => {
                 <TouchableOpacity
                   onPress={() => {
                     navigation.navigate("Course", {
-                      course: item,
-                      subject: subject,
+                      MaLopHocPhan: item.MaLopHocPhan,
+                      TenLopHocPhan: item.TenLopHocPhan,
+                      MaHocTap: hocKyTacNghiep.MaHocTap,
+                      dataToken,
                     });
                   }}
                 >
-                  <Text style={{ color: "#3076F1" }}>
+                  <Text style={{ color: "#3076F1", fontSize: 16 }}>
                     Thông tin{" "}
                     <FontAwesome
                       name="chevron-right"
@@ -472,6 +708,36 @@ const RegisterCourses = ({ route, navigation }) => {
   );
 };
 
+const mapStateToProps = (state) => {
+  return {
+    dataToken: state.dataToken,
+    hocKyTacNghiep: state.hocKyTacNghiep,
+    hoSoHocTap: state.hoSoHocTap,
+    nganhHocTacNghiep: state.nganhHocTacNghiep,
+    hocPhanDKHT: state.hocPhanDKHT,
+    lopHocPhanDKHTDaDK: state.lopHocPhanDKHTDaDK,
+  };
+};
+
+const mapDispatchToProps = (dispatch, props) => {
+  return {
+    fetchStudentListHocPhanHocKy: (dataToken, nganhHocTacNghiep) => {
+      dispatch(
+        actFetchStudentListHocPhanHocKyRequest(dataToken, nganhHocTacNghiep)
+      );
+    },
+    fetchStudentListLopHocPhanDKHTDaDK: (dataToken, hocKy) => {
+      dispatch(actFetchStudentListLopHocPhanDKHTDaDKRequest(dataToken, hocKy));
+    },
+  };
+};
+
+const ModulesConnect = connect(mapStateToProps, mapDispatchToProps)(Modules);
+const RegisterCoursesConnect = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(RegisterCourses);
+
 const Stack = createStackNavigator();
 
 export default ModulesStackScreen = ({ navigation }) => {
@@ -479,7 +745,7 @@ export default ModulesStackScreen = ({ navigation }) => {
     <Stack.Navigator>
       <Stack.Screen
         name="Modules"
-        component={Modules}
+        component={ModulesConnect}
         options={{
           headerTitleAlign: "center",
           title: "Đăng ký học tập",
@@ -495,7 +761,7 @@ export default ModulesStackScreen = ({ navigation }) => {
       />
       <Stack.Screen
         name="RegisterCourses"
-        component={RegisterCourses}
+        component={RegisterCoursesConnect}
         options={{ headerTitleAlign: "center", title: "Đăng ký lớp học phần" }}
       />
       <Stack.Screen
@@ -508,7 +774,7 @@ export default ModulesStackScreen = ({ navigation }) => {
         component={Course}
         options={({ route }) => ({
           //headerShown: false,
-          title: route.params.course.tenLHP,
+          title: route.params.TenLopHocPhan,
           headerTitleAlign: "left",
           headerTitleStyle: {
             width: WIDTH - 100,

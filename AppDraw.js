@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Picker,
   Dimensions,
-  SafeAreaView 
+  SafeAreaView,
 } from "react-native";
 import { Badge } from "react-native-elements";
 import { FontAwesome } from "@expo/vector-icons";
@@ -17,7 +17,7 @@ import { connect } from "react-redux";
 import { AuthContext } from "./AppNavigator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-
+import Loader from 'react-native-modal-loader';
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -27,7 +27,11 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 
-import { actPostStudentAvatarRequest } from "./actions/index";
+import {
+  actGetStudentNganhHocTacNghiep,
+  actPostStudentAvatarRequest,
+  actPostStudentHocKyTacNghiepRequest,
+} from "./actions/index";
 
 //Account
 import UserProfileStackScreen from "./screens/Account/UserProfile";
@@ -120,11 +124,11 @@ const GeneralFunctionsTabScreen = () => {
                 size={24}
                 color={color}
               />
-              <Badge
+              {/* <Badge
                 value="1"
                 status="error"
                 containerStyle={{ position: "absolute", top: -2, left: 30 }}
-              />
+              /> */}
             </View>
           ) : (
             <FontAwesome name={iconName} size={24} color={color} />
@@ -273,11 +277,24 @@ const TuitionTabScreen = () => {
 };
 
 DrawerContent = (props) => {
-  //console.log(props.avatar);
+  var {
+    dataToken,
+    name,
+    maSinhVien,
+    avatar,
+    hoSoHocTap,
+    hocKyTacNghiep,
+    getNganhHocTacNghiep,
+    postAvatar,
+    postHocKyTacNghiep,
+  } = props;
   const { signOut } = useContext(AuthContext);
-  const [hocKy, sethocKy] = useState("Học kỳ 2 - 2019-2020");
+  const [nganhHoc, setNganhHoc] = useState("");
+  const [hocKy, sethocKy] = useState("");
+  const [hoSoNhapHoc, setHoSoNhapHoc] = useState([]);
   const [avatarResult, setAvatarResult] = useState("");
-  var { dataToken, name, avatar, postAvatar } = props;
+  const [checkNganhHoc, setCheckNganhHoc] = useState(0);
+  const [loading, setLoading] = useState(false)
 
   const _pickImg = async () => {
     let pickerResult = await ImagePicker.launchImageLibraryAsync({
@@ -297,7 +314,7 @@ DrawerContent = (props) => {
             text: "Đồng ý",
             onPress: () => {
               setAvatarResult(pickerResult);
-              postAvatar(dataToken, pickerResult.base64);
+              postAvatar(dataToken, pickerResult.base64.toString());
             },
           },
           {
@@ -310,8 +327,24 @@ DrawerContent = (props) => {
     }
   };
 
+  useEffect(() => {
+    if (hocKyTacNghiep.MaHocKy && Object.keys(hoSoHocTap).length) {
+      setCheckNganhHoc(1);
+      sethocKy(hocKyTacNghiep.MaHocKy);
+      setNganhHoc(hocKyTacNghiep.MaHocTap.split(".")[1]);
+      for (let hoSoNhapHocTemp of hoSoHocTap.HoSoNhapHoc) {
+        if (hoSoNhapHocTemp.MaNganh === hocKyTacNghiep.MaHocTap.split(".")[1]) {
+          setHoSoNhapHoc(hoSoNhapHocTemp);
+          break;
+        }
+      }
+    }
+    setLoading(false)
+  }, [hocKyTacNghiep]);
+
   return (
     <DrawerContentScrollView {...props} style={{ height: height }}>
+      <Loader loading={loading} color="#0080ff" />
       <View
         style={{
           height: height,
@@ -384,59 +417,101 @@ DrawerContent = (props) => {
           </ImageBackground>
           <DrawerItemList {...props} />
         </View>
-        <View
-          style={{
-            borderWidth: 1,
-            borderRadius: 6,
-            borderColor: "#dbdbdb",
-            backgroundColor: "#f2f2f2",
-            marginHorizontal: 10,
-            marginBottom: 10
-          }}
-        >
-          <Picker
-            selectedValue={hocKy}
-            style={{ height: 40, width: undefined }}
-            onValueChange={(value) => sethocKy(value)}
+        {hocKy !== "" && nganhHoc !== "" && Object.keys(hoSoHocTap).length > 0 && (
+          <View
+            style={{
+              borderWidth: 1,
+              borderRadius: 6,
+              borderColor: "#dbdbdb",
+              backgroundColor: "#f2f2f2",
+              marginHorizontal: 10,
+              marginBottom: 10,
+            }}
           >
-            <Picker.Item
-              label="Học kỳ 2 - 2019-2020"
-              value={"Học kỳ 2 - 2019-2020"}
-            />
-            <Picker.Item
-              label="Học kỳ 1 - 2019-2020"
-              value={"Học kỳ 1 - 2019-2020"}
-            />
-            <Picker.Item
-              label="Học kỳ 2 - 2018-2019"
-              value={"Học kỳ 2 - 2018-2019"}
-            />
-            <Picker.Item
-              label="Học kỳ 1 - 2018-2019"
-              value={"Học kỳ 1 - 2018-2019"}
-            />
-            <Picker.Item
-              label="Học kỳ 2 - 2017-2018"
-              value={"Học kỳ 2 - 2017-2018"}
-            />
-            <Picker.Item
-              label="Học kỳ 1 - 2017-2018"
-              value={"Học kỳ 1 - 2017-2018"}
-            />
-          </Picker>
-        </View>
+            <Picker
+              selectedValue={nganhHoc}
+              style={{ height: 40, width: undefined }}
+              onValueChange={(value) => {
+                setNganhHoc(value);
+                setCheckNganhHoc(0);
+                for (let hoSoNhapHocTemp of hoSoHocTap.HoSoNhapHoc) {
+                  if (hoSoNhapHocTemp.MaNganh === value) {
+                    setHoSoNhapHoc(hoSoNhapHocTemp);
+                    break;
+                  }
+                }
+                let dataBody = {
+                  MaHocTap: `${hoSoHocTap.MaSinhVien}.${value}`,
+                  MaHocKy: hocKy,
+                  HocKy: parseInt(hocKy.split(".")[1]),
+                  NamHoc: hocKy.split(".")[0],
+                };
+                setLoading(true);
+                postHocKyTacNghiep(dataToken, dataBody);
+              }}
+            >
+              {hoSoHocTap.HoSoNhapHoc.map((item) => (
+                <Picker.Item
+                  key={item.MaNganh}
+                  label={item.TenNganh}
+                  value={item.MaNganh}
+                />
+              ))}
+            </Picker>
+            <Picker
+              selectedValue={hocKy}
+              style={{ height: 40, width: undefined }}
+              onValueChange={(value) => {
+                sethocKy(value);
+                setCheckNganhHoc(0);
+                let dataBody = {
+                  MaHocTap: `${hoSoHocTap.MaSinhVien}.${nganhHoc}`,
+                  MaHocKy: value,
+                  HocKy: parseInt(value.split(".")[1]),
+                  NamHoc: value.split(".")[0],
+                };
+                setLoading(true)
+                postHocKyTacNghiep(dataToken, dataBody);
+              }}
+            >
+              {hoSoNhapHoc.QuaTrinhHocTap.slice(0).reverse().map((item) => (
+                <Picker.Item
+                  key={item.MaHocKy}
+                  label={`Học kỳ ${item.MaHocKy.split(".")[1]} - ${
+                    item.MaHocKy.split(".")[0]
+                  }`}
+                  value={item.MaHocKy}
+                />
+              ))}
+            </Picker>
+          </View>
+        )}
       </View>
     </DrawerContentScrollView>
   );
 };
 
-const AppDraw = ({ studentProfile, avatar, dataToken, postAvatar }) => {
+const AppDraw = ({
+  studentProfile,
+  avatar,
+  dataToken,
+  hoSoHocTap,
+  hocKyTacNghiep,
+  getNganhHocTacNghiep,
+  postAvatar,
+  postHocKyTacNghiep,
+}) => {
   var name = studentProfile.HoVaTen,
+    maSinhVien = studentProfile.MaSinhVien,
     avatar,
     dataToken,
-    postAvatar;
+    hoSoHocTap,
+    hocKyTacNghiep,
+    getNganhHocTacNghiep,
+    postAvatar,
+    postHocKyTacNghiep;
   return (
-    <SafeAreaView style={{flex:1}}>
+    <SafeAreaView style={{ flex: 1 }}>
       <NavigationContainer theme={MyTheme}>
         <Drawer.Navigator
           screenOptions={({ route }) => ({
@@ -463,11 +538,11 @@ const AppDraw = ({ studentProfile, avatar, dataToken, postAvatar }) => {
                     size={30}
                     color={color}
                   />
-                  <Badge
+                  {/* <Badge
                     value="1"
                     status="error"
                     containerStyle={{ position: "absolute", top: -4, left: 30 }}
-                  />
+                  /> */}
                 </View>
               ) : (
                 <FontAwesome
@@ -487,9 +562,14 @@ const AppDraw = ({ studentProfile, avatar, dataToken, postAvatar }) => {
             <DrawerContent
               {...props}
               name={name}
+              maSinhVien={maSinhVien}
               avatar={avatar}
               dataToken={dataToken}
+              hoSoHocTap={hoSoHocTap}
+              hocKyTacNghiep={hocKyTacNghiep}
+              getNganhHocTacNghiep={getNganhHocTacNghiep}
               postAvatar={postAvatar}
+              postHocKyTacNghiep={postHocKyTacNghiep}
             />
           )}
         >
@@ -536,6 +616,8 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state) => {
   return {
     dataToken: state.dataToken,
+    hoSoHocTap: state.hoSoHocTap,
+    hocKyTacNghiep: state.hocKyTacNghiep,
     studentProfile: state.studentProfile,
     avatar: state.avatar,
   };
@@ -543,8 +625,14 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch, props) => {
   return {
+    getNganhHocTacNghiep: (hoSoHocTap, hocKyTacNghiep) => {
+      dispatch(actGetStudentNganhHocTacNghiep(hoSoHocTap, hocKyTacNghiep));
+    },
     postAvatar: (token, avatarData) => {
       dispatch(actPostStudentAvatarRequest(token, avatarData));
+    },
+    postHocKyTacNghiep: (token, dataBody) => {
+      dispatch(actPostStudentHocKyTacNghiepRequest(token, dataBody));
     },
   };
 };

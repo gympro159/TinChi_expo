@@ -2,6 +2,9 @@ import React from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { Colors } from "react-native/Libraries/NewAppScreen";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  getDateFormat,
+} from "./../../constants/common";
 
 export default ListNews = (props) => {
   const { news, index ,onPress } = props;
@@ -14,10 +17,10 @@ export default ListNews = (props) => {
             size={20}
             color="#3076F1"
           ></MaterialCommunityIcons>
-          <Text style={styles.titleContent}> {news.title}</Text>
+          <Text style={styles.titleContent}> {news.Title}</Text>
         </View>
         <View>
-          <Text style={styles.date}>[{news.date}]</Text>
+          <Text style={styles.date}>[{getDateFormat(new Date(news.CreatedTime))}]</Text>
         </View>
       </View>
     </TouchableOpacity>

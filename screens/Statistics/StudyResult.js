@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import {
   View,
@@ -10,14 +10,18 @@ import {
   TouchableOpacity,
   Picker,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { createStackNavigator } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { DrawerActions } from "@react-navigation/native";
+import _ from "lodash";
 import { LineChart, ProgressChart } from "react-native-chart-kit";
 import LineChartWithTooltips from "./../../components/LineChartWithTooltip/LineChartWithTooltip";
+import callApi from "./../../utils/apiCaller";
+import { convertTime, getDateFormat } from "./../../constants/common";
 import Subject from "./../Subject/Subject";
 import ListSemester from "../../components/ListSemesterResult/ListSemesterResult";
 import Course from "../Course/Course";
@@ -26,30 +30,156 @@ import Compose from "./../GeneralFunctions/Compose";
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
-const StudyResult = ({ navigation, studentProfile }) => {
-  const dataLineChart = {
-    labels: ["Kỳ 1", "Kỳ 2", "Kỳ 3", "Kỳ 4", "Kỳ 5", "Kỳ 6", "Kỳ 7", "Kỳ 8"],
-    datasets: [
-      {
-        data: [2.8, 3.2, 3.6, 2.5, 3.3, 2.7, 3.1, 3.3],
-        color: (opacity = 1) => `rgba(48, 118, 241, ${opacity})`, // optional
-        strokeWidth: 2, // optional
-      },
-      {
-        data: [4],
-        color: () => "rgba(0, 0, 0, 0)",
-      },
-    ],
-    legend: [], // optional
-  };
-  const dataProgressChart = {
-    data: [0.875],
-  };
-  const dataProgressChart2 = {
-    data: [0.7],
-  };
+const StudyResult = ({
+  navigation,
+  studentProfile,
+  dataToken,
+  hocKyTacNghiep,
+}) => {
+  const [loading, setLoading] = useState(true);
+  const [subjects, setSubjects] = useState([]);
+  const [diemTrungBinh, setDiemTrungBinh] = useState(0.0);
+  const [tongSoTinChi, setTongSoTinChi] = useState(0);
+  const [dataProgressChart, setDataProgressChart] = useState({});
+  const [dataProgressChart2, setDataProgressChart2] = useState({});
+  const [dataLineChart, setDataLineChart] = useState({});
+  useEffect(() => {
+    var header = {
+      "ums-application": dataToken.AppId,
+      "ums-time": convertTime(new Date()),
+      "ums-token": dataToken.Token,
+      "Content-Type": "application/json",
+    };
+    if (hocKyTacNghiep.MaHocTap) {
+      callApi(
+        `student-services/ket-qua-hoc-tap?mahoctap=${hocKyTacNghiep.MaHocTap}`,
+        "GET",
+        null,
+        header
+      ).then((res) => {
+        setSubjects(res.data.Data);
+        let listDiemTBTheoHK = [],
+          ky = 1,
+          diemTongTemp = 0;
+        res.data.Data.forEach((subject) => {
+          if (subject.CoTichLuy) {
+            diemTongTemp += subject.DiemHe4 >= 0 ? subject.DiemHe4 * subject.SoTinChi: 0;
+            if (listDiemTBTheoHK.length === 0) {
+              listDiemTBTheoHK.push({
+                Ky: `Kỳ ${ky}`,
+                MaHocKy: subject.HocKyTinhTichLuy,
+                DiemTong:
+                  subject.DiemHe4 >= 0 ? subject.DiemHe4 * subject.SoTinChi : 0,
+                soTC: subject.DiemHe4 >= 0 ? subject.SoTinChi : 0,
+              });
+            } else {
+              if (
+                listDiemTBTheoHK[listDiemTBTheoHK.length - 1].MaHocKy ===
+                subject.HocKyTinhTichLuy
+              ) {
+                listDiemTBTheoHK[listDiemTBTheoHK.length - 1].DiemTong +=
+                  subject.DiemHe4 >= 0 ? subject.DiemHe4 * subject.SoTinChi : 0;
+                listDiemTBTheoHK[listDiemTBTheoHK.length - 1].soTC +=
+                  subject.DiemHe4 >= 0 ? subject.SoTinChi : 0;
+              } else {
+                ky++;
+                listDiemTBTheoHK.push({
+                  Ky: `Kỳ ${ky}`,
+                  MaHocKy: subject.HocKyTinhTichLuy,
+                  DiemTong:
+                    subject.DiemHe4 >= 0
+                      ? subject.DiemHe4 * subject.SoTinChi
+                      : 0,
+                  soTC: subject.DiemHe4 >= 0 ? subject.SoTinChi : 0,
+                });
+              }
+            }
+          }
+        });
+        setTongSoTinChi(
+          _.sumBy(
+            _.filter(res.data.Data, function (o) {
+              return o.CoTichLuy && o.DiemHe4 >= 0;
+            }),
+            "SoTinChi"
+          )
+        );
 
-  return (
+        setDiemTrungBinh(
+          (
+            diemTongTemp /
+            _.sumBy(
+              _.filter(res.data.Data, function (o) {
+                return o.CoTichLuy && o.DiemHe4 >= 0;
+              }),
+              "SoTinChi"
+            )
+          ).toFixed(2)
+        );
+
+        setDataProgressChart({
+          data: [
+            _.sumBy(
+              _.filter(res.data.Data, function (o) {
+                return o.CoTichLuy && o.DiemHe4 >= 0;
+              }),
+              "DiemHe4"
+            ) /
+              _.filter(res.data.Data, function (o) {
+                return o.CoTichLuy && o.DiemHe4 >= 0;
+              }).length /
+              4,
+          ],
+        });
+        setDataProgressChart2({
+          data: [
+            _.sumBy(
+              _.filter(res.data.Data, function (o) {
+                return o.CoTichLuy && o.DiemHe4 >= 0;
+              }),
+              "SoTinChi"
+            ) / 120,
+          ],
+        });
+
+        let listLabel = [],
+          listData = [];
+        listDiemTBTheoHK.forEach((item) => {
+          listLabel.push(item.Ky);
+          listData.push(parseFloat((item.DiemTong / item.soTC).toFixed(2)));
+        });
+        setDataLineChart({
+          labels: listLabel,
+          datasets: [
+            {
+              data: listData,
+              color: (opacity = 1) => `rgba(48, 118, 241, ${opacity})`, // optional
+              strokeWidth: 2, // optional
+            },
+            {
+              data: [4],
+              color: () => "rgba(0, 0, 0, 0)",
+            },
+          ],
+          legend: [], // optional
+        });
+        setLoading(false);
+      });
+    }
+  }, []);
+
+  return loading ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
+  ) : (
     <SafeAreaProvider>
       <View
         style={{
@@ -74,7 +204,9 @@ const StudyResult = ({ navigation, studentProfile }) => {
         <TouchableOpacity
           style={{ paddingRight: 10 }}
           onPress={() => {
-            navigation.push("StudyResultDetail");
+            navigation.push("StudyResultDetail", {
+              subjects,
+            });
           }}
         >
           <Text style={{ color: "#3076F1", fontSize: 16 }}>
@@ -114,7 +246,7 @@ const StudyResult = ({ navigation, studentProfile }) => {
           {studentProfile.MaSinhVien}
         </Text>
       </LinearGradient>
-      
+
       <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
         <ScrollView horizontal={true}>
           <LineChartWithTooltips
@@ -187,7 +319,7 @@ const StudyResult = ({ navigation, studentProfile }) => {
             <Text
               style={{ textAlign: "center", fontSize: 18, fontWeight: "bold" }}
             >
-              3.5
+              {diemTrungBinh}
             </Text>
             <Text
               style={{ textAlign: "center", fontSize: 16, color: "#bcbcbc" }}
@@ -239,12 +371,12 @@ const StudyResult = ({ navigation, studentProfile }) => {
             <Text
               style={{ textAlign: "center", fontSize: 18, fontWeight: "bold" }}
             >
-              86
+              {tongSoTinChi}
             </Text>
             <Text
               style={{ textAlign: "center", fontSize: 16, color: "#bcbcbc" }}
             >
-              /118
+              /120
             </Text>
           </View>
           <ProgressChart
@@ -268,66 +400,67 @@ const StudyResult = ({ navigation, studentProfile }) => {
   );
 };
 
-const StudyResultDetail = ({ navigation, studentProfile }) => {
-  const [hocKy, setHocKy] = useState("Học kỳ 2 - 2016-2017");
-  const [contentTable, setContentTable] = useState([
-    {
-      year: "2016-2017",
-      semester: 1,
-      course: [
-        {
-          maHP: "CTR1012",
-          tenHP: "Những nguyên lí cơ bản của chủ nghĩa Mác-Lênin 1",
-          he10: 7.0,
-          diemChu: "B",
-          he4: 3.0,
-        },
-        {
-          maHP: "TIN1013",
-          tenHP: "Tin học đại cương",
-          he10: 7.4,
-          diemChu: "B",
-          he4: 3.0,
-        },
-        {
-          maHP: "TIN1042",
-          tenHP: "Kỹ thuật lập trình 1",
-          he10: 5.0,
-          diemChu: "D",
-          he4: 1.0,
-        },
-      ],
-    },
-    {
-      year: "2016-2017",
-      semester: 2,
-      course: [
-        {
-          maHP: "MTR1022",
-          tenHP: "Giáo dục môi trường đại cương",
-          he10: 8.7,
-          diemChu: "A",
-          he4: 4.0,
-        },
-        {
-          maHP: "TIN3133",
-          tenHP: "Đồ hoạ máy tính",
-          he10: 8.9,
-          diemChu: "A",
-          he4: 4.0,
-        },
-        {
-          maHP: "TIN3053",
-          tenHP: "Các hệ quản trị cơ sở dữ liệu",
-          he10: 8.7,
-          diemChu: "A",
-          he4: 4.0,
-        },
-      ],
-    },
-  ]);
+const StudyResultDetail = ({
+  route,
+  navigation,
+  studentProfile,
+  hocKyTacNghiep,
+}) => {
+  const [loading, setLoading] = useState(true);
+  const [hocKy, setHocKy] = useState("");
+  const [listHocKy, setListHocKy] = useState([]);
+  const [subjectsSemester, setSubjectsSemester] = useState([]);
+  const [tongSoTinChi, setTongSoTinChi] = useState(0);
+  const [diemTrungBinhHe10, setDiemTrungBinhHe10] = useState(0.0);
+  const [diemTrungBinhHe4, setDiemTrungBinhHe4] = useState(0.0);
+  var { subjects } = route.params;
+  useEffect(() => {
+    let subjectsSemesterTemp = [],
+      listHocKyTemp = [];
+    subjects.forEach((subject) => {
+      listHocKyTemp.push(subject.HocKyTinhTichLuy);
+      if (subject.HocKyTinhTichLuy === hocKyTacNghiep.MaHocKy) {
+        subjectsSemesterTemp.push(subject);
+      }
+    });
+    let diemTongHe10 = 0,
+      diemTongHe4 = 0,
+      soTinChiTemp = _.sumBy(
+        _.filter(subjectsSemesterTemp, function (o) {
+          return o.CoTichLuy && o.DiemHe4 >= 0;
+        }),
+        "SoTinChi"
+      );
 
-  return (
+    setTongSoTinChi(soTinChiTemp);
+
+    subjectsSemesterTemp.forEach((item) => {
+      if (item.CoTichLuy) {
+        diemTongHe10 += item.DiemHe10 >= 0 ? item.DiemHe10 * item.SoTinChi : 0;
+        diemTongHe4 += item.DiemHe4 >= 0 ? item.DiemHe4 * item.SoTinChi : 0;
+      }
+    });
+
+    setDiemTrungBinhHe10((diemTongHe10 / soTinChiTemp).toFixed(2));
+    setDiemTrungBinhHe4((diemTongHe4 / soTinChiTemp).toFixed(2));
+    setListHocKy([...new Set(listHocKyTemp)].reverse());
+    setSubjectsSemester(subjectsSemesterTemp);
+    setHocKy(hocKyTacNghiep.MaHocKy);
+    setLoading(false);
+  }, []);
+
+  return loading ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
+  ) : (
     <>
       <LinearGradient
         colors={["#65A5F6", "#3076F1"]}
@@ -371,17 +504,44 @@ const StudyResultDetail = ({ navigation, studentProfile }) => {
           <Picker
             selectedValue={hocKy}
             style={{ height: 40, width: 250 }}
-            onValueChange={(value) => setHocKy(value)}
+            onValueChange={(value) => {
+              setHocKy(value);
+              let subjectsSemesterTemp = [];
+              subjects.forEach((subject) => {
+                if (subject.HocKyTinhTichLuy === value) {
+                  subjectsSemesterTemp.push(subject);
+                }
+              });
+              let diemTongHe10 = 0,
+                diemTongHe4 = 0,
+                soTinChiTemp = _.sumBy(
+                  _.filter(subjectsSemesterTemp, function (o) {
+                    return o.CoTichLuy && o.DiemHe4 >= 0;
+                  }),
+                  "SoTinChi"
+                );
+              setTongSoTinChi(soTinChiTemp);
+              subjectsSemesterTemp.forEach((item) => {
+                if (item.CoTichLuy) {
+                  diemTongHe10 +=
+                    item.DiemHe10 >= 0 ? item.DiemHe10 * item.SoTinChi : 0;
+                  diemTongHe4 +=
+                    item.DiemHe4 >= 0 ? item.DiemHe4 * item.SoTinChi : 0;
+                }
+              });
+              setDiemTrungBinhHe10((diemTongHe10 / soTinChiTemp).toFixed(2));
+              setDiemTrungBinhHe4((diemTongHe4 / soTinChiTemp).toFixed(2));
+              setSubjectsSemester(subjectsSemesterTemp);
+            }}
             mode="dropdown"
           >
-            <Picker.Item
-              label="Học kỳ 2 - 2016-2017"
-              value={"Học kỳ 2 - 2016-2017"}
-            />
-            <Picker.Item
-              label="Học kỳ 1 - 2016-2017"
-              value={"Học kỳ 1 - 2016-2017"}
-            />
+            {listHocKy.map((item, index) => (
+              <Picker.Item
+                key={index}
+                label={`Học kỳ ${item.split(".")[1]} - ${item.split(".")[0]}`}
+                value={item}
+              />
+            ))}
           </Picker>
         </View>
 
@@ -400,7 +560,7 @@ const StudyResultDetail = ({ navigation, studentProfile }) => {
               paddingRight: 20,
             }}
           >
-            <Text style={{ fontSize: 18, color: "#fff" }}>16</Text>
+            <Text style={{ fontSize: 18, color: "#fff" }}>{tongSoTinChi}</Text>
             <Text style={{ fontSize: 16, color: "#fff" }}>
               Tín chỉ tích lũy
             </Text>
@@ -413,103 +573,100 @@ const StudyResultDetail = ({ navigation, studentProfile }) => {
               paddingLeft: 20,
             }}
           >
-            <Text style={{ fontSize: 18, color: "#fff" }}>9.2 / 3.8</Text>
+            <Text style={{ fontSize: 18, color: "#fff" }}>
+              {diemTrungBinhHe10} / {diemTrungBinhHe4}
+            </Text>
             <Text style={{ fontSize: 16, color: "#fff" }}>Điểm trung bình</Text>
           </View>
         </View>
       </LinearGradient>
 
-      {contentTable.map((semesterContent, index) => {
-        return (
-          `Học kỳ ${semesterContent.semester} - ${semesterContent.year}` ===
-            hocKy && (
-            <FlatList
-              key={index}
-              data={semesterContent.course}
-              renderItem={({ item }) => (
-                <View
+      <FlatList
+        data={subjectsSemester}
+        renderItem={({ item }) => (
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 10,
+              paddingVertical: 20,
+              borderRadius: 16,
+              backgroundColor: "#fff",
+              margin: 5,
+              zIndex: 5,
+              elevation: 5,
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+            }}
+          >
+            <View style={{ width: WIDTH * 0.7 }}>
+              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                {item.TenHocPhan}
+              </Text>
+              <Text style={{ fontSize: 14, color: "#808080" }}>
+                Số tín chỉ: {item.SoTinChi}
+              </Text>
+              <Text style={{ fontSize: 14, color: "#808080" }}>
+                Điểm trung bình (Hệ 4): {item.DiemHe4.toFixed(2)}
+              </Text>
+              <Text style={{ fontSize: 14, color: "#808080" }}>
+                Điểm trung bình (Hệ 10): {item.DiemHe10.toFixed(2)}
+              </Text>
+            </View>
+            <View>
+              <View
+                style={{
+                  backgroundColor: "#D3E3F2",
+                  height: 40,
+                  width: 80,
+                  borderRadius: 40,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    paddingHorizontal: 10,
-                    paddingVertical: 20,
-                    borderRadius: 16,
-                    backgroundColor: "#fff",
-                    margin: 5,
-                    zIndex: 5,
-                    elevation: 5,
-                    shadowColor: "#000",
-                    shadowOffset: {
-                      width: 0,
-                      height: 2,
-                    },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    color: "#3076F1",
                   }}
                 >
-                  <View style={{ width: WIDTH * 0.7 }}>
-                    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                      {item.tenHP}
-                    </Text>
-                    <Text style={{ fontSize: 14, color: "#808080" }}>
-                      Điểm trung bình (Hệ 10): {item.he10.toFixed(1)}
-                    </Text>
-                  </View>
-                  <View>
-                    <View
-                      style={{
-                        backgroundColor: "#D3E3F2",
-                        height: 40,
-                        width: 80,
-                        borderRadius: 40,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 18,
-                          fontWeight: "bold",
-                          color: "#3076F1",
-                        }}
-                      >
-                        {item.diemChu}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={{ marginTop: 10 }}
-                      onPress={() => {
-                        navigation.navigate("Subject", {
-                          subject: item.tenHP,
-                          maHP: item.maHP,
-                        });
-                      }}
-                    >
-                      <Text style={{ color: "#3076F1" }}>
-                        Thông tin{" "}
-                        <FontAwesome
-                          name="chevron-right"
-                          size={15}
-                          color="#3076F1"
-                        />
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-              keyExtractor={(item) => `${item.maHP}`}
-            />
-          )
-        );
-      })}
+                  {item.DiemChu}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={{ marginTop: 10 }}
+                onPress={() => {
+                  navigation.navigate("Subject", {
+                    TenHocPhan: item.TenHocPhan,
+                    MaHocPhan: item.MaHocPhan,
+                  });
+                }}
+              >
+                <Text style={{ color: "#3076F1" }}>
+                  Thông tin{" "}
+                  <FontAwesome name="chevron-right" size={15} color="#3076F1" />
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        keyExtractor={(item) => `${item.MaHocPhan}`}
+      />
     </>
   );
 };
 
 const mapStateToProps = (state) => {
   return {
+    dataToken: state.dataToken,
+    hocKyTacNghiep: state.hocKyTacNghiep,
     studentProfile: state.studentProfile,
   };
 };
@@ -554,7 +711,7 @@ export default StudyResultStackScreen = ({ navigation }) => {
         name="Subject"
         component={Subject}
         options={({ route }) => ({
-          title: route.params.subject,
+          title: route.params.TenHocPhan,
           headerTitleAlign: "left",
           headerTitleStyle: {
             width: WIDTH - 100,

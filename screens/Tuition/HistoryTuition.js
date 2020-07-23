@@ -6,8 +6,8 @@ import {
   ScrollView,
   FlatList,
   Dimensions,
-  Picker,
-  Modal,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Button, Text } from "react-native-elements";
 import { Table, Row } from "react-native-table-component";
@@ -23,25 +23,44 @@ const HEIGHT = Dimensions.get("window").height;
 const HistoryTuition = ({ navigation }) => {
   const [listHistoryTuition, setListHistoryTuition] = useState([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = () => {
     axios
       .get(`https://5ebb82caf2cfeb001697cd36.mockapi.io/school/historyTuition`)
       .then((res) => {
         setListHistoryTuition(res.data.reverse());
         setLoading(false);
+        setRefreshing(false);
       });
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   return loading ? (
-    <Spinner
-      visible={loading}
-      textContent={"Đang tải..."}
-      textStyle={{ color: "#fff" }}
-    />
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
   ) : (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: "#FFF" }}>
       <FlatList
         data={listHistoryTuition}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item, index }) => (
           <TouchableOpacity
             style={{
@@ -103,6 +122,7 @@ const HistoryTuition = ({ navigation }) => {
           </TouchableOpacity>
         )}
         keyExtractor={(item) => `${item.soBienLai}`}
+        containerStyle={{ flex: 1 }}
       />
     </View>
   );

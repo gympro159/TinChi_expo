@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useEffect, createContext } from "react";
-import { AsyncStorage } from "react-native";
+import { AsyncStorage, StatusBar } from "react-native";
 import { connect } from "react-redux";
 import * as Font from 'expo-font';
 import { FontAwesome } from "@expo/vector-icons";
@@ -7,13 +7,14 @@ import {
   actPostAccountRequest,
   actDeleteToken,
   actFetchStudentProfileRequest,
+  actUserLogout
 } from "./actions/index";
 import Login from "./screens/Login/Login";
 import AppDraw from "./AppDraw";
 
 export const AuthContext = createContext();
 
-function AppNavigator({ dataToken, postAccount, deleteToken }) {
+function AppNavigator({ dataToken, postAccount, deleteToken, actUserLogout }) {
   const [auth, dispatch] = useReducer(
     (prevState, action) => {
       switch (action.type) {
@@ -80,7 +81,7 @@ function AppNavigator({ dataToken, postAccount, deleteToken }) {
       },
       signOut: () => {
         AsyncStorage.removeItem("userToken");
-        deleteToken();
+        actUserLogout();
         dispatch({ type: "SIGN_OUT" });
       },
     }),
@@ -88,6 +89,7 @@ function AppNavigator({ dataToken, postAccount, deleteToken }) {
   );
   return (
     <AuthContext.Provider value={authContext}>
+      <StatusBar backgroundColor="#282C34" barStyle="default" />
       {!auth.userToken || Object.keys(auth.userToken).length === 0 ? (
         <Login />
       ) : (
@@ -115,6 +117,9 @@ const mapDispatchToProps = (dispatch, props) => {
     fetchStudentProfile: (dataToken) => {
       dispatch(actFetchStudentProfileRequest(dataToken));
     },
+    actUserLogout: () => {
+      dispatch(actUserLogout());
+    }
   };
 };
 

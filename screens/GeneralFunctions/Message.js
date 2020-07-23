@@ -6,6 +6,7 @@ import {
   Dimensions,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Text, Input, CheckBox, Button } from "react-native-elements";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -92,7 +93,9 @@ const Inbox = ({ navigation }) => {
   const [btnGroupPress, setBtnGroupPress] = useState([true, false, false]);
   const [filterInput, setFilterInput] = useState("");
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = () => {
     axios
       .get(`https://5e88429a19f5190016fed3f8.mockapi.io/school/message`)
       .then((res) => {
@@ -108,6 +111,7 @@ const Inbox = ({ navigation }) => {
             messageDeletedTemp.push(res.data[i]);
           }
         }
+        setBtnGroupPress([true, false, false])
         setMessageInbox(messageInboxTemp);
         setMessageSent(messageSentTemp);
         setMessageDeleted(messageDeletedTemp);
@@ -117,16 +121,32 @@ const Inbox = ({ navigation }) => {
           list.push(false);
         }
         setCheckList(list);
+        setCheckedAll(false);
         setLoading(false);
+        setRefreshing(false);
       });
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   return loading ? (
-    <Spinner
-      visible={loading}
-      textContent={"Đang tải..."}
-      textStyle={{ color: "#fff" }}
-    />
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
   ) : (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <TouchableOpacity
@@ -284,6 +304,8 @@ const Inbox = ({ navigation }) => {
       </View>
       <FlatList
         data={messagesRender}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item, index }) =>
           (!filterInput.trim()
             ? true

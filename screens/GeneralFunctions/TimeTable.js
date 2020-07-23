@@ -7,6 +7,7 @@ import {
   FlatList,
   Dimensions,
   Picker,
+  ActivityIndicator,
 } from "react-native";
 import { Text, Button } from "react-native-elements";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -17,65 +18,76 @@ import { DrawerActions } from "@react-navigation/native";
 import _ from "lodash";
 import axios from "axios";
 import { Table, TableWrapper, Col } from "react-native-table-component";
-import Spinner from "react-native-loading-spinner-overlay";
 import {
   getDateFormat,
   getLocalDateFormat,
   getDateISOStringZoneTime,
 } from "./../../constants/common";
+import { actFetchStudentThoiKhoaBieuRequest } from "./../../actions/index";
 import Course from "./../Course/Course";
 import Compose from "./Compose";
-import Subject from "./../Subject/Subject";
 
 const { width, height } = Dimensions.get("window");
 
-const TimeTable = ({ navigation, thoiKhoaBieu }) => {
+const TimeTable = ({
+  navigation,
+  dataToken,
+  hocKyTacNghiep,
+  thoiKhoaBieu,
+  fetchThoiKhoaBieu,
+}) => {
   const cellContent = (value) => {
     return value.length > 0 ? (
-      <View>
-        {value.map((item, index) => {
-          return (
-            <View
-              key={index}
-              style={
-                value.length > 1 && index > 0
-                  ? {
-                      borderTopColor: "#dbdbdb",
-                      borderTopWidth: 0.5,
-                      paddingTop: 10,
-                      marginTop: 5,
-                      marginHorizontal: 10,
-                    }
-                  : {}
-              }
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate("Subject", {
-                    maHP: item.maLHP,
-                  });
-                }}
+      <View style={{ justifyContent: "center", alignItems: "center" }}>
+        <ScrollView>
+          {value.map((item, index) => {
+            return (
+              <View
+                key={index}
+                style={
+                  value.length > 1 && index > 0
+                    ? {
+                        borderTopColor: "#dbdbdb",
+                        borderTopWidth: 0.5,
+                        paddingTop: 10,
+                        marginTop: 5,
+                        marginHorizontal: 10,
+                      }
+                    : {}
+                }
               >
-                <Text
-                  style={{
-                    textAlign: "center",
-                    fontWeight: "bold",
-                    color: "#3076F1",
+                <TouchableOpacity
+                  onPress={() => {
+                    navigation.navigate("Course", {
+                      MaLopHocPhan: item.MaLopHocPhan,
+                      TenLopHocPhan: item.TenLopHocPhan,
+                      MaHocTap: hocKyTacNghiep.MaHocTap,
+                      dataToken,
+                    });
                   }}
                 >
-                  {item.TenLopHocPhan}
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      color: "#3076F1",
+                    }}
+                  >
+                    {item.TenLopHocPhan}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={{ textAlign: "center" }}>
+                  {item.MaLopHocPhan}
+                  {"\n"}
+                  <Text style={{ color: "grey" }}>
+                    [{item.TietBatDau}-{item.TietBatDau + item.SoTiet - 1},{" "}
+                    {item.TenPhongHoc}]
+                  </Text>
                 </Text>
-              </TouchableOpacity>
-              <Text style={{ textAlign: "center" }}>
-                {item.MaLopHocPhan}
-                {"\n"}
-                <Text style={{ color: "grey" }}>
-                  [{item.TietBatDau}-{item.TietKetThuc}, {item.TenPhongHoc}]
-                </Text>
-              </Text>
-            </View>
-          );
-        })}
+              </View>
+            );
+          })}
+        </ScrollView>
       </View>
     ) : (
       <View></View>
@@ -94,97 +106,138 @@ const TimeTable = ({ navigation, thoiKhoaBieu }) => {
   const [schedule, setSchedule] = useState([]);
   const [scheduleWeekSelected, setScheduleWeekSelected] = useState(0);
   const [scheduleDaySelected, setScheduleDaySelected] = useState(0);
-  const [btnGroupPress, setBtnGroupPress] = useState([true, false, false, false, false, false, false]);
+  const [btnGroupPress, setBtnGroupPress] = useState([
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
   const [tableContent, setTableContent] = useState([[], [], []]);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    var dateStartTemp = new Date(thoiKhoaBieu[0].NgayHoc),
-      dateEndTemp = new Date(thoiKhoaBieu[thoiKhoaBieu.length - 1].NgayHoc);
-    dateStartTemp.setDate(
-      dateStartTemp.getDay() === 0
-        ? dateStartTemp.getDate() - 6
-        : dateStartTemp.getDate() - dateStartTemp.getDay() + 1
-    );
-    dateEndTemp.setDate(
-      dateStartTemp.getDay() === 0
-        ? dateStartTemp.getDate() - 6
-        : dateEndTemp.getDate() - dateEndTemp.getDay() + 7
-    );
-    var scheduleMain = [];
-    for (let i = dateStartTemp; i <= dateEndTemp; i.setDate(i.getDate() + 1)) {
-      scheduleMain.push({
-        day: getDateFormat(i),
-        dayISO: getDateISOStringZoneTime(i),
-        sang: [],
-        chieu: [],
-        toi: [],
+    if (thoiKhoaBieu.length) {
+      var dateStartTemp = new Date(thoiKhoaBieu[0].NgayHoc),
+        dateEndTemp = new Date(thoiKhoaBieu[thoiKhoaBieu.length - 1].NgayHoc);
+      dateStartTemp.setDate(
+        dateStartTemp.getDay() === 0
+          ? dateStartTemp.getDate() - 6
+          : dateStartTemp.getDate() - dateStartTemp.getDay() + 1
+      );
+      dateEndTemp.setDate(
+        dateStartTemp.getDay() === 0
+          ? dateStartTemp.getDate() - 6
+          : dateEndTemp.getDate() - dateEndTemp.getDay() + 7
+      );
+      var scheduleMain = [];
+      for (
+        let i = dateStartTemp;
+        i <= dateEndTemp;
+        i.setDate(i.getDate() + 1)
+      ) {
+        scheduleMain.push({
+          day: getDateFormat(i),
+          dayISO: getDateISOStringZoneTime(i),
+          sang: [],
+          chieu: [],
+          toi: [],
+        });
+      }
+      scheduleMain.forEach((day) => {
+        for (let i = 0, len = thoiKhoaBieu.length; i < len; i++) {
+          if (day.dayISO === thoiKhoaBieu[i].NgayHoc) {
+            if (thoiKhoaBieu[i].TietBatDau >= 9) {
+              day.toi.push(thoiKhoaBieu[i]);
+            } else if (thoiKhoaBieu[i].TietBatDau >= 5) {
+              day.chieu.push(thoiKhoaBieu[i]);
+            } else day.sang.push(thoiKhoaBieu[i]);
+          }
+        }
       });
-    }
-    scheduleMain.forEach((day) => {
-      for (let i = 0, len = thoiKhoaBieu.length; i < len; i++) {
-        if (day.dayISO === thoiKhoaBieu[i].NgayHoc) {
-          if (thoiKhoaBieu[i].TietBatDau >= 9) {
-            day.toi.push(thoiKhoaBieu[i]);
-          } else if (thoiKhoaBieu[i].TietBatDau >= 5) {
-            day.chieu.push(thoiKhoaBieu[i]);
-          } else day.sang.push(thoiKhoaBieu[i]);
-        }
-      }
-    });
-    var scheduleTemp = _.chunk(scheduleMain, 7);
-    
-    for (let i = 0; i < scheduleTemp.length; i++) {
-      let kt = 1;
-      for (let j = 0; j < 7; j++) {
-        if (
-          scheduleTemp[i][j].sang.length > 0 ||
-          scheduleTemp[i][j].chieu.length > 0 ||
-          scheduleTemp[i][j].toi.length > 0
-        ) {
-          kt = 0;
-          break;
-        }
-      }
-      if (kt === 1) {
-        scheduleTemp.splice(i, 1);
-        i--;
-      }
-    }
+      var scheduleTemp = _.chunk(scheduleMain, 7);
 
-    setSchedule(scheduleTemp);
-    setTableContent(handleTableContent(scheduleTemp, 0, 0)); // set tạm thời khóa biểu ngày đầu tiên
-
-    var dateFormat = getDateISOStringZoneTime(new Date());
-    for (let i = 0; i < scheduleTemp.length; i++) {
-      let check = 0;
-      for (let j = 0; j < 7; j++) {
-        if (scheduleTemp[i][j].dayISO === dateFormat) {
-          check = 1;
-          setBtnGroupPress(
-            _.fill(
-              [false, false, false, false, false, false, false],
-              true,
-              j,
-              j + 1
-            )
-          );
-          setTableContent(handleTableContent(scheduleTemp, i, j)); //set thời khóa biểu hôm nay
-          setScheduleWeekSelected(i);
-          setScheduleDaySelected(j);
-          break;
+      for (let i = 0; i < scheduleTemp.length; i++) {
+        let kt = 1;
+        for (let j = 0; j < 7; j++) {
+          if (
+            scheduleTemp[i][j].sang.length > 0 ||
+            scheduleTemp[i][j].chieu.length > 0 ||
+            scheduleTemp[i][j].toi.length > 0
+          ) {
+            kt = 0;
+            break;
+          }
+        }
+        if (kt === 1) {
+          scheduleTemp.splice(i, 1);
+          i--;
         }
       }
-      if (check) break;
+
+      setSchedule(scheduleTemp);
+      setTableContent(handleTableContent(scheduleTemp, 0, 0)); // set tạm thời khóa biểu ngày đầu tiên
+
+      var dateFormat = getDateISOStringZoneTime(new Date());
+      setScheduleWeekSelected(0);
+      setScheduleDaySelected(0);
+      for (let i = 0; i < scheduleTemp.length; i++) {
+        let check = 0;
+        for (let j = 0; j < 7; j++) {
+          if (scheduleTemp[i][j].dayISO === dateFormat) {
+            check = 1;
+            setBtnGroupPress(
+              _.fill(
+                [false, false, false, false, false, false, false],
+                true,
+                j,
+                j + 1
+              )
+            );
+            setTableContent(handleTableContent(scheduleTemp, i, j)); //set thời khóa biểu hôm nay
+            setScheduleWeekSelected(i);
+            setScheduleDaySelected(j);
+            break;
+          }
+        }
+        if (check) break;
+      }
     }
     setLoading(false);
   }, [thoiKhoaBieu]);
 
+  useEffect(() => {
+    fetchThoiKhoaBieu(dataToken, hocKyTacNghiep.MaHocKy, "", "");
+    setLoading(true);
+  }, [hocKyTacNghiep]);
+
   return loading ? (
-    <Spinner
-      visible={loading}
-      textContent={"Đang tải..."}
-      textStyle={{ color: "#fff" }}
-    />
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF",
+      }}
+    >
+      <ActivityIndicator size="large" color="#3076F1" />
+    </View>
+  ) : thoiKhoaBieu.length === 0 ? (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 30,
+        backgroundColor: "#fff",
+      }}
+    >
+      <Text style={{ fontWeight: "bold", fontSize: 17, textAlign: "center" }}>
+        Không có lớp học phần nào trong học kỳ này!
+      </Text>
+    </View>
   ) : (
     <SafeAreaProvider>
       <View style={{ justifyContent: "flex-start" }}>
@@ -292,11 +345,31 @@ const TimeTable = ({ navigation, thoiKhoaBieu }) => {
 
 const mapStateToProps = (state) => {
   return {
+    dataToken: state.dataToken,
+    hocKyTacNghiep: state.hocKyTacNghiep,
     thoiKhoaBieu: state.thoiKhoaBieu,
   };
 };
 
-const TimeTableConnect = connect(mapStateToProps, null)(TimeTable);
+const mapDispatchToProps = (dispatch, props) => {
+  return {
+    fetchThoiKhoaBieu: (dataToken, hocKyTacNghiep, tungay, denNgay) => {
+      dispatch(
+        actFetchStudentThoiKhoaBieuRequest(
+          dataToken,
+          hocKyTacNghiep,
+          tungay,
+          denNgay
+        )
+      );
+    },
+  };
+};
+
+const TimeTableConnect = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TimeTable);
 
 const Stack = createStackNavigator();
 
@@ -320,25 +393,14 @@ export default TimeTableStackScreen = ({ navigation }) => {
         }}
       />
       <Stack.Screen
-        name="Subject"
-        component={Subject}
-        options={({ route }) => ({
-          title: route.params.maHP,
-          headerTitleAlign: "left",
-          headerTitleStyle: {
-            width: width - 100,
-          },
-        })}
-      />
-      <Stack.Screen
         name="Course"
         component={Course}
         options={({ route }) => ({
           //headerShown: false,
-          title: route.params.course.tenLHP,
+          title: route.params.TenLopHocPhan,
           headerTitleAlign: "left",
           headerTitleStyle: {
-            width: WIDTH - 100,
+            width: width - 100,
           },
         })}
       />
